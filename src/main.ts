@@ -83,3 +83,24 @@ playBtn.addEventListener("click", () => {
     alert(e);
   }
 });
+
+const helpBtn = document.getElementById("helpBtn")!;
+helpBtn.addEventListener("click", () => {
+  const dialog = document.createElement("dialog");
+  dialog.setAttribute("open", "");
+
+  const txt = document.createElement("pre");
+  txt.textContent = currentDef?.help ?? "You are on your own, buddy. Sorry.";
+
+  const form = document.createElement("form");
+  form.setAttribute("method", "dialog");
+  const tryAgain = document.createElement("button");
+  tryAgain.textContent = "OK";
+
+  form.appendChild(tryAgain);
+  dialog.appendChild(txt);
+  dialog.appendChild(form);
+  document.body.appendChild(dialog);
+
+  dialog.addEventListener('close', () => dialog.remove());
+});

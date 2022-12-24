@@ -11,6 +11,7 @@ export type LevelDefinition = {
     dragon: CharacterDefinition;
     actions: number;
     solution?: string;
+    help?: string,
 }
 
 export const levels: LevelDefinition[] = [
@@ -20,7 +21,23 @@ export const levels: LevelDefinition[] = [
         ],
         knight: { position: { row: 0, column: 0 } },
         dragon: { position: { row: 0, column: 2 }, hp: 1 },
-        actions: 2
+        actions: 2,
+        help: `
+        To attack the dragon you have to move your knight next to it and swing
+        your sword in it's direction like this: "knight.attack(<DIRECTION>);".
+        If you want to attack a dragon to the east, you can use "knight.attack(EAST);".
+        If you want to attack a dragon to the north, you can use "knight.attack(NORTH);".
+
+        To move the knight use "knight.move(<DIRECTION>);".
+        If you want to move your knight to the west, you can use "knight.move(WEST);".
+        If you want to move your knight to the south, you can use "knight.move(SOUTH);".
+        
+        There are 4 directions available:
+        NORTH
+        EAST
+        WEST
+        SOUTH
+        `
     },
     {
         level: [

@@ -105,3 +105,8 @@ button:focus-visible {
   font-size: 1rem;
   padding: 10px;
 }
+
+dialog {
+  border: none;
+  background-color: #2e3338;
+}
