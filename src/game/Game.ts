@@ -224,6 +224,10 @@ export enum GameState {
     LOST
 }
 
+export function determineActionCount(code: string): number {
+    return (code.match(/move/g) || []).length + (code.match(/attack/g) || []).length;
+}
+
 export class Game {
     level!: Level;
     dragon!: Dragon;
@@ -247,7 +251,11 @@ export class Game {
         queueRender({ level: this.level, knight: { position: this.knight!.position }, dragon: { position: this.dragon!.position, hp: this.dragon!.hp } });
     }
 
-    play(script: string) {
+    play(script: string): GameState {
+        if (determineActionCount(script) > this.levelDef.actions) {
+            return GameState.LOST;
+        }
+
         const lexer = new Lexer(script);
         const parser = new Parser(lexer);
         const env = new Environment(createStandardEnv());

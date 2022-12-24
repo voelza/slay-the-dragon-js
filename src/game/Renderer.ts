@@ -76,20 +76,20 @@ function renderTile(tile: Tile): Element {
 function addDragonToTile(tile: Element) {
     const img = document.createElement("img");
     img.src = dragonImg;
-    img.setAttribute("style", "width: 45px; height: 45px;");
+    img.setAttribute("style", "position: absolute; width: 45px; height: 45px;");
     tile.appendChild(img);
 }
 
 function addDeadDragonToTile(tile: Element) {
     const img = document.createElement("img");
     img.src = dragonImg;
-    img.setAttribute("style", "width: 45px; height: 45px; filter: grayscale(1);");
+    img.setAttribute("style", "position: absolute; width: 45px; height: 45px; filter: grayscale(1);");
     tile.appendChild(img);
 }
 
 function addKnightToTile(tile: Element) {
     const img = document.createElement("img");
     img.src = knightImg;
-    img.setAttribute("style", "width: 45px; height: 45px;");
+    img.setAttribute("style", "position: absolute; width: 45px; height: 45px;");
     tile.appendChild(img);
 }

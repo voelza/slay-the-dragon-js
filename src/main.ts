@@ -1,29 +1,44 @@
-import { Game, GameState } from './game/Game';
+import { determineActionCount, Game, GameState } from './game/Game';
 import { render } from './game/Renderer';
 import './style.css';
-import { levels } from './game/Levels';
+import { LevelDefinition, levels } from './game/Levels';
 
+
+let currentLevel = 0;
+let currentDef: LevelDefinition | undefined;
+let game: Game | undefined;
 
 const levelLabel = document.getElementById("levelLabel")!;
-let currentLevel = 0;
-let game: Game | undefined;
+const actionCounter = document.getElementById("actionCounter")!;
+const input = document.getElementById("input")! as HTMLTextAreaElement;
+
+function initActionCounter() {
+  actionCounter.textContent = `${determineActionCount(input.value)}/${currentDef!.actions} Actions`
+}
+input.addEventListener("input", initActionCounter);
+
 function initGame() {
-  game = new Game(levels[currentLevel]);
+  currentDef = levels[currentLevel];
+  game = new Game(currentDef);
   levelLabel.textContent = `Level #${currentLevel + 1}`;
+  initActionCounter();
 }
 initGame();
 render(document.getElementById("level")!);
 
-const input = document.getElementById("input")! as HTMLTextAreaElement;
 const playBtn = document.getElementById("playBtn")! as HTMLButtonElement;
 playBtn.addEventListener("click", () => {
   const code = input.value;
-  const state = game!.play(code);
-  if (state === GameState.WON) {
-    currentLevel++;
-    initGame();
-    input.value = "";
-  } else {
-    game!.init();
+  try {
+    const state = game!.play(code);
+    if (state === GameState.WON) {
+      currentLevel++;
+      initGame();
+      input.value = "";
+    } else {
+      game!.init();
+    }
+  } catch (e) {
+    alert(e);
   }
 });
