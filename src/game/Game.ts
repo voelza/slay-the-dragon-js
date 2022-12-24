@@ -3,6 +3,7 @@ import { evaluate, nativeBoolean, NULL } from "../lang/Evaluator";
 import { Lexer } from "../lang/Lexer";
 import { ErrorObject, GameObject, Instance, LangObject, ObjectType } from "../lang/Object";
 import { Parser } from "../lang/Parser";
+import { LevelDefinition } from "./Levels";
 import { queueRender } from "./Renderer";
 
 export type Position = {
@@ -224,17 +225,21 @@ export enum GameState {
 }
 
 export class Game {
-    level: Level;
-    dragon: Dragon | undefined;
-    knight: Knight | undefined;
+    level!: Level;
+    dragon!: Dragon;
+    knight!: Knight;
+    levelDef: LevelDefinition;
 
-    constructor(level: Level) {
-        this.level = level;
+    constructor(levelDef: LevelDefinition) {
+        this.levelDef = levelDef;
+        this.init();
     }
 
-    setGameState(knight: Knight, dragon: Dragon) {
-        this.dragon = dragon;
-        this.knight = knight;
+    init() {
+        const { level, dragon, knight } = this.levelDef;
+        this.level = new Level(level);
+        this.dragon = new Dragon(dragon.position.row, dragon.position.column, dragon.hp!);
+        this.knight = new Knight(this, knight.position.row, knight.position.column, 1);
         this.informRenderer();
     }
 
@@ -249,7 +254,7 @@ export class Game {
         env.set("knight", new Instance(this.knight!));
         const langObject = evaluate(parser.parseProgram(), env);
         if (langObject instanceof ErrorObject) {
-            console.error(langObject.error);
+            alert(langObject.error);
             return GameState.LOST;
         }
         return this.resolveGameState();

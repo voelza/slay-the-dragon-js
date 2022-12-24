@@ -1,4 +1,4 @@
-import { Dragon, Knight, Level, Position, Tile } from "./Game";
+import { Level, Position, Tile } from "./Game";
 import dragonImg from "./dragon.svg";
 import knightImg from "./knight.svg";
 
@@ -62,7 +62,7 @@ function renderTile(tile: Tile): Element {
     const tileEle = document.createElement("div");
     let bgColor: string = "transparent";
     if (tile === Tile.ROAD) {
-        bgColor = "white";
+        bgColor = "#c9c9c9";
     }
     tileEle.setAttribute("style", `
     width: 50px;
