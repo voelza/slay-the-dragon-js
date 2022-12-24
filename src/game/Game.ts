@@ -3,8 +3,9 @@ import { evaluate, nativeBoolean, NULL } from "../lang/Evaluator";
 import { Lexer } from "../lang/Lexer";
 import { ErrorObject, GameObject, Instance, LangObject, ObjectType } from "../lang/Object";
 import { Parser } from "../lang/Parser";
+import { queueRender } from "./Renderer";
 
-type Position = {
+export type Position = {
     row: number,
     column: number
 }
@@ -117,6 +118,9 @@ class Character {
 }
 
 export class Dragon extends Character {
+    copy(): Dragon {
+        throw new Error("Method not implemented.");
+    }
     hp: number;
 
     constructor(row: number, column: number, hp: number) {
@@ -222,18 +226,27 @@ export enum GameState {
 export class Game {
     level: Level;
     dragon: Dragon | undefined;
+    knight: Knight | undefined;
 
-    constructor(level: Level,) {
+    constructor(level: Level) {
         this.level = level;
     }
 
-    play(script: string, knight: Knight, dragon: Dragon) {
+    setGameState(knight: Knight, dragon: Dragon) {
         this.dragon = dragon;
+        this.knight = knight;
+        this.informRenderer();
+    }
 
+    informRenderer() {
+        queueRender({ level: this.level, knight: { position: this.knight!.position }, dragon: { position: this.dragon!.position, hp: this.dragon!.hp } });
+    }
+
+    play(script: string) {
         const lexer = new Lexer(script);
         const parser = new Parser(lexer);
         const env = new Environment(createStandardEnv());
-        env.set("knight", new Instance(knight));
+        env.set("knight", new Instance(this.knight!));
         const langObject = evaluate(parser.parseProgram(), env);
         if (langObject instanceof ErrorObject) {
             console.error(langObject.error);
@@ -246,12 +259,14 @@ export class Game {
         const desiredPosition = character.nextPosition(direction);
         if (this.level.canStepOn(desiredPosition)) {
             character.move(desiredPosition);
+            this.informRenderer();
         }
     }
 
     attack(character: Character, direction: Direction) {
         if (this.dragon!.isOnPosition(character.nextPosition(direction))) {
             this.dragon!.takeDamage(character.attack);
+            this.informRenderer();
         }
     }
 
