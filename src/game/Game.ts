@@ -58,7 +58,7 @@ export class Level {
     }
 
     isTileOnPosition(position: Position, tile: Tile): boolean {
-        return this.getTile(position) === tile;
+        return this.getTile(position) == tile;
     }
 
     getTile(position: Position): Tile | undefined {
@@ -221,6 +221,7 @@ export function createStandardEnv(): Environment {
 
 export enum GameState {
     WON,
+    TOO_MANY_ACTIONS,
     LOST
 }
 
@@ -253,7 +254,7 @@ export class Game {
 
     play(script: string): GameState {
         if (determineActionCount(script) > this.levelDef.actions) {
-            return GameState.LOST;
+            return GameState.TOO_MANY_ACTIONS;
         }
 
         const lexer = new Lexer(script);
@@ -286,10 +287,8 @@ export class Game {
     isNextTo(character: Character, direction: Direction, target: Interactable): boolean {
         if (Interactable.DRAGON === target) {
             return this.dragon!.isOnPosition(character.nextPosition(direction));
-        } else if (Interactable.ROAD === target) {
-            return this.level.isTileOnPosition(character.nextPosition(direction), fromInteractable(target)!);
         }
-        return false;
+        return this.level.isTileOnPosition(character.nextPosition(direction), fromInteractable(target)!);
     }
 
     resolveGameState(): GameState {
