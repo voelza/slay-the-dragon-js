@@ -104,9 +104,28 @@ button:focus-visible {
   text-align: left;
   font-size: 1rem;
   padding: 10px;
+  border: none !important;
+}
+
+#control textarea:focus {
+  outline: none !important;
+  border: none !important;
 }
 
 dialog {
   border: none;
   background-color: #2e3338;
+}
+
+.tabs {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+  margin-left: 10px;
+}
+
+.tab.active {
+  background-color: #646cff;
 }

@@ -264,7 +264,7 @@ export class Game {
         const div = document.createElement("div");
 
         const txt = document.createElement("pre");
-        txt.textContent = `${reason}\nThe dragon woke up and burned you!`;
+        txt.textContent = `${reason}\n\nThe dragon woke up and burned you!`;
 
         const img = document.createElement("img");
         img.src = death;
@@ -289,7 +289,7 @@ export class Game {
         env.set("knight", new Instance(this.knight!));
         const langObject = evaluate(parser.parseProgram(), env);
         if (langObject instanceof ErrorObject) {
-            this.queueDeath(`Your battle plan is errornous!\nERROR: ${langObject.error}`);
+            this.queueDeath(`Your battle plan is errornous!\n\nERROR: ${langObject.error}`);
             return GameState.ERROR;
         }
         const endState = this.resolveGameState();

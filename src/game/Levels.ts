@@ -10,6 +10,7 @@ export type LevelDefinition = {
     knight: CharacterDefinition;
     dragon: CharacterDefinition;
     actions: number;
+    extends?: string[],
     solution?: string;
     help?: string,
 }
