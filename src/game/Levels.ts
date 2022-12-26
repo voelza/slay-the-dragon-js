@@ -37,6 +37,11 @@ export const levels: LevelDefinition[] = [
         EAST
         WEST
         SOUTH
+
+        You only have a certain amount of actions to slay the dragon. If you use more actions or
+        you don't slay it at all, you will be burned by the dragon.
+
+        Every 'move' and 'attack' statement will be counted as one action.
         `
     },
     {

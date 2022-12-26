@@ -4,7 +4,8 @@ import { Lexer } from "../lang/Lexer";
 import { ErrorObject, GameObject, Instance, LangObject, ObjectType } from "../lang/Object";
 import { Parser } from "../lang/Parser";
 import { LevelDefinition } from "./Levels";
-import { queueRender } from "./Renderer";
+import { queueRender, RenderType } from "./Renderer";
+import death from "./death.gif";
 
 export type Position = {
     row: number,
@@ -219,10 +220,12 @@ export function createStandardEnv(): Environment {
     return env;
 }
 
+
 export enum GameState {
     WON,
     TOO_MANY_ACTIONS,
-    LOST
+    LOST,
+    ERROR
 }
 
 export function determineActionCount(code: string): number {
@@ -245,15 +248,38 @@ export class Game {
         this.level = new Level(level);
         this.dragon = new Dragon(dragon.position.row, dragon.position.column, dragon.hp!);
         this.knight = new Knight(this, knight.position.row, knight.position.column, 1);
-        this.informRenderer();
+        this.queueLevelRender();
     }
 
-    informRenderer() {
-        queueRender({ level: this.level, knight: { position: this.knight!.position }, dragon: { position: this.dragon!.position, hp: this.dragon!.hp } });
+    queueLevelRender() {
+        queueRender({
+            type: RenderType.LEVEL,
+            level: this.level,
+            knight: { position: this.knight!.position },
+            dragon: { position: this.dragon!.position, hp: this.dragon!.hp }
+        });
+    }
+
+    queueDeath(reason: string) {
+        const div = document.createElement("div");
+
+        const txt = document.createElement("pre");
+        txt.textContent = `${reason}\nThe dragon woke up and burned you!`;
+
+        const img = document.createElement("img");
+        img.src = death;
+
+        div.appendChild(txt);
+        div.appendChild(img);
+        queueRender({
+            type: RenderType.DIALOG,
+            body: div
+        });
     }
 
     play(script: string): GameState {
         if (determineActionCount(script) > this.levelDef.actions) {
+            this.queueDeath("You used to many actions!");
             return GameState.TOO_MANY_ACTIONS;
         }
 
@@ -263,24 +289,28 @@ export class Game {
         env.set("knight", new Instance(this.knight!));
         const langObject = evaluate(parser.parseProgram(), env);
         if (langObject instanceof ErrorObject) {
-            alert(langObject.error);
-            return GameState.LOST;
+            this.queueDeath(`Your battle plan is errornous!\nERROR: ${langObject.error}`);
+            return GameState.ERROR;
         }
-        return this.resolveGameState();
+        const endState = this.resolveGameState();
+        if (endState === GameState.LOST) {
+            this.queueDeath("You didn't slay the dragon!");
+        }
+        return endState;
     }
 
     move(character: Character, direction: Direction) {
         const desiredPosition = character.nextPosition(direction);
         if (this.level.canStepOn(desiredPosition)) {
             character.move(desiredPosition);
-            this.informRenderer();
+            this.queueLevelRender();
         }
     }
 
     attack(character: Character, direction: Direction) {
         if (this.dragon!.isOnPosition(character.nextPosition(direction))) {
             this.dragon!.takeDamage(character.attack);
-            this.informRenderer();
+            this.queueLevelRender();
         }
     }
 

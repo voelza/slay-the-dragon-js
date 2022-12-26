@@ -11,15 +11,26 @@ export type DragonRender = {
     hp: number;
 }
 
-export type RenderQueueEntry = {
+export enum RenderType {
+    LEVEL,
+    DIALOG
+}
+
+export type LevelRender = {
+    type: RenderType,
     level: Level,
     knight: KnightRender,
     dragon: DragonRender
 }
 
-const renderQueue: RenderQueueEntry[] = [];
+export type DialogRender = {
+    type: RenderType,
+    body: Element
+}
 
-export function queueRender(entry: RenderQueueEntry): void {
+const renderQueue: any[] = [];
+
+export function queueRender(entry: any): void {
     renderQueue.push(entry);
 }
 
@@ -29,12 +40,17 @@ export function render(element: Element): void {
     id = setInterval(async () => {
         if (renderQueue.length > 0) {
             console.log("Rendering UI");
-            renderLevel(element, renderQueue.shift()!);
+            const render = renderQueue.shift()!;
+            if (render.type === RenderType.LEVEL) {
+                renderLevel(element, render);
+            } else if (render.type == RenderType.DIALOG) {
+                renderDialog(render);
+            }
         }
     }, 1000);
 }
 
-function renderLevel(element: Element, entry: RenderQueueEntry): void {
+function renderLevel(element: Element, entry: LevelRender): void {
     const { level, knight, dragon } = entry;
     element.innerHTML = "";
     for (let row = 0; row < level.tiles.length; row++) {
@@ -92,4 +108,22 @@ function addKnightToTile(tile: Element) {
     img.src = knightImg;
     img.setAttribute("style", "position: absolute; width: 45px; height: 45px;");
     tile.appendChild(img);
+}
+
+
+function renderDialog(render: DialogRender) {
+    const dialog = document.createElement("dialog");
+    dialog.setAttribute("open", "");
+
+    const form = document.createElement("form");
+    form.setAttribute("method", "dialog");
+    const tryAgain = document.createElement("button");
+    tryAgain.textContent = "Try again";
+
+    form.appendChild(tryAgain);
+    dialog.appendChild(render.body);
+    dialog.appendChild(form);
+    document.body.appendChild(dialog);
+
+    dialog.addEventListener('close', () => dialog.remove());
 }

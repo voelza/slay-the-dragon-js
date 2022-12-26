@@ -2,7 +2,6 @@ import { determineActionCount, Game, GameState } from './game/Game';
 import { render } from './game/Renderer';
 import './style.css';
 import { LevelDefinition, levels } from './game/Levels';
-import death from "./game/death.gif";
 
 
 let currentLevel = 0;
@@ -51,31 +50,6 @@ playBtn.addEventListener("click", () => {
       currentLevel++;
       initGame();
       input.value = "";
-    } else if (state === GameState.TOO_MANY_ACTIONS) {
-      const dialog = document.createElement("dialog");
-      dialog.setAttribute("open", "");
-
-      const txt = document.createElement("div");
-      txt.textContent = "You used to many actions! The dragon woke up and burned you!";
-
-      const img = document.createElement("img");
-      img.src = death;
-
-      const form = document.createElement("form");
-      form.setAttribute("method", "dialog");
-      const tryAgain = document.createElement("button");
-      tryAgain.textContent = "Try again";
-
-      form.appendChild(tryAgain);
-      dialog.appendChild(txt);
-      dialog.appendChild(img);
-      dialog.appendChild(form);
-      document.body.appendChild(dialog);
-
-      dialog.addEventListener('close', () => dialog.remove());
-
-
-      game!.init();
     } else {
       game!.init();
     }
