@@ -14,12 +14,11 @@ export enum NodeType {
 
 export interface Node {
     type: NodeType,
+    string(): string
 }
 export interface Expression extends Node {
-    string(): string
 }
 export interface Statement extends Node {
-    string(): string
 }
 
 export class Program implements Node {
@@ -28,6 +27,9 @@ export class Program implements Node {
 
     constructor(statements: Statement[]) {
         this.statements = statements;
+    }
+    string(): string {
+        throw new Error("Method not implemented.");
     }
 }
 
@@ -66,7 +68,7 @@ export class CallExpression implements Expression {
         this.args = args;
     }
     string(): string {
-        return `${this.func.string()}(${this.args.map(a => a.string()).join(",")})`
+        return `${this.func.string()}(${this.args.map(a => a.string()).join(",")});`
     }
 }
 

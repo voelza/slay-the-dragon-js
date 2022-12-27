@@ -197,6 +197,10 @@ function createVisualInputFromASTStatement(stmt: Node): HTMLElement {
   }
 
   container.appendChild(createVisualInput(btnBody));
+  container.draggable = true;
+  container.ondragstart = (ev) => {
+    ev.dataTransfer?.setData("statement", stmt.string());
+  };
   return container;
 }
 
@@ -230,6 +234,19 @@ visualInputControls.appendChild(createVisualInputStatement(controlIcons.get("att
 visualInputControls.appendChild(createVisualInputStatement(controlIcons.get("attackSOUTH")!, "knight.attack(SOUTH);"));
 visualInputControls.appendChild(createVisualInputStatement(controlIcons.get("attackWEST")!, "knight.attack(WEST);"));
 visualInputControls.appendChild(createVisualInputStatement(controlIcons.get("attackEAST")!, "knight.attack(EAST);"));
+
+
+visualInputControls.addEventListener("drop", (ev: DragEvent) => {
+  const data = ev.dataTransfer!.getData("statement");
+  const currentCode = inputMap.get(activeTab) ?? "";
+
+  inputMap.set(activeTab, currentCode.replace(data, ""));
+  initActionCounter();
+  renderVisualProgram();
+});
+visualInputControls.addEventListener("dragover", (e: DragEvent) => {
+  e.preventDefault();
+});
 
 let currentMode: "VIS" | "TXT" = "VIS";
 const toggleModeBtn = document.getElementById("toggleModeBtn")!;
