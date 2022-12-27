@@ -5,8 +5,12 @@ import mageImg from "./mage.svg";
 
 export type ChracterRender = {
     position: Position;
-    attack?: number;
-    hp?: number;
+    attack: number;
+}
+
+export type DragonRender = {
+    position: Position | Position[];
+    hp: number;
 }
 
 export enum RenderType {
@@ -18,7 +22,7 @@ export type LevelRender = {
     type: RenderType,
     level: Level,
     knight: ChracterRender,
-    dragon: ChracterRender,
+    dragon: DragonRender,
     mage?: ChracterRender
 }
 
@@ -49,6 +53,10 @@ export function render(element: Element): void {
     }, 1000);
 }
 
+function isOnTile(row: number, column: number, position: Position): boolean {
+    return position.column === column && position.row === row;
+}
+
 function renderLevel(element: Element, entry: LevelRender): void {
     const { level, knight, dragon, mage } = entry;
     element.innerHTML = "";
@@ -57,18 +65,20 @@ function renderLevel(element: Element, entry: LevelRender): void {
         rowEle.setAttribute("style", "display: flex;");
         for (let column = 0; column < level.tiles[row].length; column++) {
             const tile = renderTile(level.tiles[row][column]);
-            if (dragon!.position.row === row && dragon!.position.column === column) {
-                if (dragon!.hp! > 0) {
+            if (!Array.isArray(dragon.position) && isOnTile(row, column, dragon!.position)) {
+                if (dragon!.hp > 0) {
                     addDragonToTile(tile, dragon!.hp!);
                 } else {
                     addDeadDragonToTile(tile, dragon!.hp!);
                 }
+            } else if (Array.isArray(dragon.position) && dragon.position.some(p => isOnTile(row, column, p))) {
+                addRandomDragonToTile(tile);
             }
-            if (knight!.position.row === row && knight!.position.column === column) {
+            if (isOnTile(row, column, knight!.position)) {
                 addKnightToTile(tile, knight.attack!);
             }
 
-            if (mage && mage.position.row === row && mage.position.column === column) {
+            if (mage && isOnTile(row, column, mage.position)) {
                 addMageTile(tile, mage.attack!);
             }
 
@@ -83,12 +93,13 @@ function renderTile(tile: Tile): Element {
     let bgColor: string = "transparent";
     if (tile === Tile.ROAD) {
         bgColor = "#c9c9c9";
+    } else if (tile === Tile.WALL) {
+        bgColor = "linear-gradient(black, gray)";
     }
     tileEle.setAttribute("style", `
     width: 50px;
     height: 50px; 
-    border-radius: 5px; 
-    background-color: ${bgColor};
+    background: ${bgColor};
     `);
     return tileEle;
 }
@@ -108,6 +119,15 @@ function addDeadDragonToTile(tile: Element, hp: number) {
     tile.appendChild(img);
     addIndicator(tile, `${hp}`, "gray");
 }
+
+function addRandomDragonToTile(tile: Element) {
+    const img = document.createElement("img");
+    img.src = dragonImg;
+    img.setAttribute("style", "position: absolute; width: 45px; height: 45px; filter: sepia(1);");
+    tile.appendChild(img);
+    addIndicator(tile, "?", "gray");
+}
+
 
 function addKnightToTile(tile: Element, attack: number) {
     const img = document.createElement("img");

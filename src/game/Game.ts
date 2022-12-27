@@ -3,7 +3,7 @@ import { evaluate, nativeBoolean, NULL } from "../lang/Evaluator";
 import { Lexer } from "../lang/Lexer";
 import { ErrorObject, GameObject, Instance, LangObject, ObjectType } from "../lang/Object";
 import { Parser } from "../lang/Parser";
-import { LevelDefinition } from "./Levels";
+import { DragonDefinition, LevelDefinition } from "./Levels";
 import { queueRender, RenderType } from "./Renderer";
 import death from "./death.gif";
 
@@ -182,10 +182,24 @@ export class ActionCharacter extends Character {
 
 export class Dragon extends Character {
     hp: number;
+    positions: Position | Position[]
 
-    constructor(row: number, column: number, hp: number) {
-        super(row, column, 9999);
+    constructor(dragon: DragonDefinition, hp: number) {
+        super(-1, -1, 9999);
         this.hp = hp;
+        this.positions = dragon.position;
+        if (!Array.isArray(this.positions)) {
+            this.position = this.positions;
+        }
+    }
+
+    determinePosition() {
+        if (Array.isArray(this.positions)) {
+            this.position = this.positions[Math.floor(Math.random() * this.positions.length)];
+        } else {
+            this.position = this.positions;
+        }
+        console.log(this.position);
     }
 
     takeDamage(damage: number): void {
@@ -271,11 +285,25 @@ export class Game {
     init() {
         const { level, dragon, knight, mage } = this.levelDef;
         this.level = new Level(level);
-        this.dragon = new Dragon(dragon.position.row, dragon.position.column, dragon.hp!);
+        this.dragon = new Dragon(dragon, dragon.hp!);
         this.knight = new Knight(this, knight.position.row, knight.position.column, 1);
         this.mage = mage ? new Mage(this, mage?.position.row, mage?.position.column) : undefined;
 
-        this.queueLevelRender();
+        if (Array.isArray(this.dragon.positions)) {
+            this.queueRandomLevelRender();
+        } else {
+            this.queueLevelRender();
+        }
+    }
+
+    queueRandomLevelRender() {
+        queueRender({
+            type: RenderType.LEVEL,
+            level: this.level,
+            knight: { position: this.knight!.position, attack: this.knight!.attack },
+            dragon: { position: this.dragon!.positions, hp: this.dragon!.hp },
+            mage: this.mage ? { position: this.mage?.position, attack: this.mage!.attack } : undefined
+        });
     }
 
     queueLevelRender() {
@@ -311,6 +339,8 @@ export class Game {
             return GameState.TOO_MANY_ACTIONS;
         }
 
+        this.dragon.determinePosition();
+
         const lexer = new Lexer(script);
         const parser = new Parser(lexer);
         const env = new Environment(createStandardEnv());
@@ -334,15 +364,16 @@ export class Game {
         const desiredPosition = character.nextPosition(direction);
         if (this.level.canStepOn(desiredPosition)) {
             character.move(desiredPosition);
-            this.queueLevelRender();
         }
+        this.queueLevelRender();
     }
 
     attack(character: Character, direction: Direction) {
         if (this.dragon!.isOnPosition(character.nextPosition(direction))) {
             this.dragon!.takeDamage(character.attack);
-            this.queueLevelRender();
         }
+        character.attack -= character.attack;
+        this.queueLevelRender();
     }
 
     isNextTo(character: Character, direction: Direction, target: Interactable): boolean {
@@ -356,8 +387,8 @@ export class Game {
         if (this.knight!.isOnPosition(mage.nextPosition(direction))) {
             this.knight.attack += mage.attack;
             mage.attack -= mage.attack;
-            this.queueLevelRender();
         }
+        this.queueLevelRender();
     }
 
     resolveGameState(): GameState {
