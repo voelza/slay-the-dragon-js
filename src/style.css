@@ -132,6 +132,12 @@ button:focus-visible {
 #visualInputContent {
   background-color: #3b3b3b;
   height: 80%;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 5px;
+  box-sizing: border-box;
 }
 
 
@@ -159,4 +165,8 @@ dialog {
 
 .tab.active {
   background-color: #646cff;
+}
+
+.drag-highlight {
+  background-color: #646cff !important;
 }

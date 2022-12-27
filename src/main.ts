@@ -131,7 +131,9 @@ function createVisualInputStatement(text: string, statement: string) {
   btn.draggable = true;
   btn.ondragstart = (ev) => {
     ev.dataTransfer?.setData("statement", JSON.stringify({ text, statement }));
+    visualInputContent.classList.add("drag-highlight");
   };
+  btn.ondragend = () => visualInputContent.classList.remove("drag-highlight");
   return btn;
 }
 
@@ -200,7 +202,9 @@ function createVisualInputFromASTStatement(stmt: Node): HTMLElement {
   container.draggable = true;
   container.ondragstart = (ev) => {
     ev.dataTransfer?.setData("statement", stmt.string());
+    visualInputControls.classList.add("drag-highlight");
   };
+  container.ondragend = () => visualInputControls.classList.remove("drag-highlight");
   return container;
 }
 
