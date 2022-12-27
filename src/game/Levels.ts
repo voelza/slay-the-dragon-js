@@ -9,6 +9,7 @@ export type LevelDefinition = {
     level: Tile[][];
     knight: CharacterDefinition;
     dragon: CharacterDefinition;
+    mage?: CharacterDefinition;
     actions: number;
     extends?: string[],
     solution?: string;
@@ -103,6 +104,25 @@ export const levels: LevelDefinition[] = [
             }
         }
         win();
+        `
+    },
+    {
+        level: [
+            [Tile.HOLE, Tile.ROAD, Tile.HOLE],
+            [Tile.HOLE, Tile.ROAD, Tile.HOLE],
+            [Tile.ROAD, Tile.ROAD, Tile.ROAD],
+        ],
+        knight: { position: { row: 2, column: 0 } },
+        mage: { position: { row: 0, column: 1 } },
+        dragon: { position: { row: 2, column: 2 }, hp: 2 },
+        actions: 4,
+        help: `
+        The Mage entered the game!
+        He can move around just like the Knight can, but he cannot attack.
+        Instead he can support the Knight by using his 'support' move like this:
+        'mage.support(<Direction>);'
+        e.g.
+        mage.support(SOUTH);
         `
     },
 ]

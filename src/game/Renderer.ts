@@ -1,14 +1,12 @@
 import { Level, Position, Tile } from "./Game";
 import dragonImg from "./dragon.svg";
 import knightImg from "./knight.svg";
+import mageImg from "./mage.svg";
 
-export type KnightRender = {
+export type ChracterRender = {
     position: Position;
-}
-
-export type DragonRender = {
-    position: Position;
-    hp: number;
+    attack?: number;
+    hp?: number;
 }
 
 export enum RenderType {
@@ -19,8 +17,9 @@ export enum RenderType {
 export type LevelRender = {
     type: RenderType,
     level: Level,
-    knight: KnightRender,
-    dragon: DragonRender
+    knight: ChracterRender,
+    dragon: ChracterRender,
+    mage?: ChracterRender
 }
 
 export type DialogRender = {
@@ -51,7 +50,7 @@ export function render(element: Element): void {
 }
 
 function renderLevel(element: Element, entry: LevelRender): void {
-    const { level, knight, dragon } = entry;
+    const { level, knight, dragon, mage } = entry;
     element.innerHTML = "";
     for (let row = 0; row < level.tiles.length; row++) {
         const rowEle = document.createElement("div");
@@ -59,15 +58,20 @@ function renderLevel(element: Element, entry: LevelRender): void {
         for (let column = 0; column < level.tiles[row].length; column++) {
             const tile = renderTile(level.tiles[row][column]);
             if (dragon!.position.row === row && dragon!.position.column === column) {
-                if (dragon!.hp > 0) {
-                    addDragonToTile(tile);
+                if (dragon!.hp! > 0) {
+                    addDragonToTile(tile, dragon!.hp!);
                 } else {
-                    addDeadDragonToTile(tile);
+                    addDeadDragonToTile(tile, dragon!.hp!);
                 }
             }
             if (knight!.position.row === row && knight!.position.column === column) {
-                addKnightToTile(tile);
+                addKnightToTile(tile, knight.attack!);
             }
+
+            if (mage && mage.position.row === row && mage.position.column === column) {
+                addMageTile(tile, mage.attack!);
+            }
+
             rowEle.appendChild(tile);
         }
         element.appendChild(rowEle);
@@ -89,27 +93,58 @@ function renderTile(tile: Tile): Element {
     return tileEle;
 }
 
-function addDragonToTile(tile: Element) {
+function addDragonToTile(tile: Element, hp: number) {
     const img = document.createElement("img");
     img.src = dragonImg;
     img.setAttribute("style", "position: absolute; width: 45px; height: 45px;");
     tile.appendChild(img);
+    addIndicator(tile, `${hp}`, "green");
 }
 
-function addDeadDragonToTile(tile: Element) {
+function addDeadDragonToTile(tile: Element, hp: number) {
     const img = document.createElement("img");
     img.src = dragonImg;
     img.setAttribute("style", "position: absolute; width: 45px; height: 45px; filter: grayscale(1);");
     tile.appendChild(img);
+    addIndicator(tile, `${hp}`, "gray");
 }
 
-function addKnightToTile(tile: Element) {
+function addKnightToTile(tile: Element, attack: number) {
     const img = document.createElement("img");
     img.src = knightImg;
     img.setAttribute("style", "position: absolute; width: 45px; height: 45px;");
     tile.appendChild(img);
+    addIndicator(tile, `${attack}`, "black");
 }
 
+function addMageTile(tile: Element, attack: number) {
+    const img = document.createElement("img");
+    img.src = mageImg;
+    img.setAttribute("style", "position: absolute; width: 45px; height: 45px;");
+    tile.appendChild(img);
+    addIndicator(tile, `${attack}`, "blue");
+}
+
+function addIndicator(tile: Element, label: string, color: string) {
+    const indicator = document.createElement("div");
+    indicator.setAttribute("style", `
+    color: white; 
+    width: 23px; 
+    height: 23px; 
+    border-radius: 50%; 
+    background-color: ${color}; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+    position: relative;
+    top: 35px;
+    left: 20px;
+    `)
+    const innerInidicator = document.createElement("div");
+    indicator.appendChild(innerInidicator);
+    indicator.textContent = label;
+    tile.appendChild(indicator);
+}
 
 function renderDialog(render: DialogRender) {
     const dialog = document.createElement("dialog");

@@ -80,7 +80,7 @@ export class Level {
     }
 }
 
-class Character {
+export class Character {
     position: Position;
     attack: number;
 
@@ -117,25 +117,10 @@ class Character {
     isOnPosition(otherPosition: Position): boolean {
         return this.position.row === otherPosition.row && this.position.column === otherPosition.column;
     }
+
 }
 
-export class Dragon extends Character {
-    copy(): Dragon {
-        throw new Error("Method not implemented.");
-    }
-    hp: number;
-
-    constructor(row: number, column: number, hp: number) {
-        super(row, column, 9999);
-        this.hp = hp;
-    }
-
-    takeDamage(damage: number): void {
-        this.hp -= damage;
-    }
-}
-
-export class Knight extends Character {
+export class ActionCharacter extends Character {
     game: Game;
 
     constructor(game: Game, row: number, column: number, attack: number) {
@@ -153,18 +138,6 @@ export class Knight extends Character {
             this.game.move(this, gameObject.content);
         }
 
-        return NULL;
-    }
-
-    nativeAttack(args: LangObject[]): LangObject {
-        const [ok, result] = this.getGameObject(args);
-        if (!ok) {
-            return result;
-        }
-        const gameObject = result as GameObject;
-        if (gameObject.content in Direction) {
-            this.game.attack(this, gameObject.content);
-        }
         return NULL;
     }
 
@@ -207,6 +180,55 @@ export class Knight extends Character {
     }
 }
 
+export class Dragon extends Character {
+    hp: number;
+
+    constructor(row: number, column: number, hp: number) {
+        super(row, column, 9999);
+        this.hp = hp;
+    }
+
+    takeDamage(damage: number): void {
+        this.hp -= damage;
+    }
+}
+
+export class Knight extends ActionCharacter {
+    constructor(game: Game, row: number, column: number, attack: number) {
+        super(game, row, column, attack);
+    }
+
+    nativeAttack(args: LangObject[]): LangObject {
+        const [ok, result] = this.getGameObject(args);
+        if (!ok) {
+            return result;
+        }
+        const gameObject = result as GameObject;
+        if (gameObject.content in Direction) {
+            this.game.attack(this, gameObject.content);
+        }
+        return NULL;
+    }
+}
+
+export class Mage extends ActionCharacter {
+    constructor(game: Game, row: number, column: number,) {
+        super(game, row, column, 1);
+    }
+
+    nativeSupport(args: LangObject[]): LangObject {
+        const [ok, result] = this.getGameObject(args);
+        if (!ok) {
+            return result;
+        }
+        const gameObject = result as GameObject;
+        if (gameObject.content in Direction) {
+            this.game.support(this, gameObject.content);
+        }
+        return NULL;
+    }
+}
+
 export function createStandardEnv(): Environment {
     const env = new Environment();
     env.set("NORTH", new GameObject(Direction.NORTH));
@@ -229,13 +251,16 @@ export enum GameState {
 }
 
 export function determineActionCount(code: string): number {
-    return (code.match(/move/g) || []).length + (code.match(/attack/g) || []).length;
+    return (code.match(/move\(/g) || []).length
+        + (code.match(/attack\(/g) || []).length
+        + (code.match(/support\(/g) || []).length;
 }
 
 export class Game {
     level!: Level;
     dragon!: Dragon;
     knight!: Knight;
+    mage?: Mage;
     levelDef: LevelDefinition;
 
     constructor(levelDef: LevelDefinition) {
@@ -244,10 +269,12 @@ export class Game {
     }
 
     init() {
-        const { level, dragon, knight } = this.levelDef;
+        const { level, dragon, knight, mage } = this.levelDef;
         this.level = new Level(level);
         this.dragon = new Dragon(dragon.position.row, dragon.position.column, dragon.hp!);
         this.knight = new Knight(this, knight.position.row, knight.position.column, 1);
+        this.mage = mage ? new Mage(this, mage?.position.row, mage?.position.column) : undefined;
+
         this.queueLevelRender();
     }
 
@@ -255,8 +282,9 @@ export class Game {
         queueRender({
             type: RenderType.LEVEL,
             level: this.level,
-            knight: { position: this.knight!.position },
-            dragon: { position: this.dragon!.position, hp: this.dragon!.hp }
+            knight: { position: this.knight!.position, attack: this.knight!.attack },
+            dragon: { position: this.dragon!.position, hp: this.dragon!.hp },
+            mage: this.mage ? { position: this.mage?.position, attack: this.mage!.attack } : undefined
         });
     }
 
@@ -287,6 +315,9 @@ export class Game {
         const parser = new Parser(lexer);
         const env = new Environment(createStandardEnv());
         env.set("knight", new Instance(this.knight!));
+        if (this.mage) {
+            env.set("mage", new Instance(this.mage));
+        }
         const langObject = evaluate(parser.parseProgram(), env);
         if (langObject instanceof ErrorObject) {
             this.queueDeath(`Your battle plan is errornous!\n\nERROR: ${langObject.error}`);
@@ -319,6 +350,14 @@ export class Game {
             return this.dragon!.isOnPosition(character.nextPosition(direction));
         }
         return this.level.isTileOnPosition(character.nextPosition(direction), fromInteractable(target)!);
+    }
+
+    support(mage: Mage, direction: Direction) {
+        if (this.knight!.isOnPosition(mage.nextPosition(direction))) {
+            this.knight.attack += mage.attack;
+            mage.attack -= mage.attack;
+            this.queueLevelRender();
+        }
     }
 
     resolveGameState(): GameState {

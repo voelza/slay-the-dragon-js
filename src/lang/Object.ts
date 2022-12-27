@@ -1,4 +1,4 @@
-import { createStandardEnv, Knight } from "../game/Game";
+import { ActionCharacter, createStandardEnv, Knight, Mage } from "../game/Game";
 import { BlockStatement } from "./Ast";
 import { Environment } from "./Environment";
 
@@ -97,15 +97,24 @@ export class GameObject implements LangObject {
 export class Instance implements LangObject {
     type: ObjectType = ObjectType.INSTANCE;
     move: NativeFunction;
-    attack: NativeFunction;
+    attack: NativeFunction | undefined;
     isNextTo: NativeFunction;
+    support: NativeFunction | undefined;
+
     userDefinedFunctions: Map<string, Func>;
     instanceEnv: Environment;
 
-    constructor(knight: Knight) {
-        this.move = new NativeFunction(knight.nativeMove.bind(knight));
-        this.attack = new NativeFunction(knight.nativeAttack.bind(knight));
-        this.isNextTo = new NativeFunction(knight.nativeIsNextTo.bind(knight));
+    constructor(character: ActionCharacter) {
+        this.move = new NativeFunction(character.nativeMove.bind(character));
+        this.isNextTo = new NativeFunction(character.nativeIsNextTo.bind(character));
+
+        if (character instanceof Knight) {
+            this.attack = new NativeFunction(character.nativeAttack.bind(character));
+        }
+
+        if (character instanceof Mage) {
+            this.support = new NativeFunction(character.nativeSupport.bind(character));
+        }
 
         this.userDefinedFunctions = new Map();
         this.instanceEnv = createStandardEnv();
@@ -115,10 +124,12 @@ export class Instance implements LangObject {
     get(property: string): LangObject {
         if ("move" === property) {
             return this.move;
-        } else if ("attack" === property) {
+        } else if (this.attack && "attack" === property) {
             return this.attack;
         } else if ("isNextTo" === property) {
             return this.isNextTo;
+        } else if (this.support && "support" === property) {
+            return this.support;
         }
 
         const userFunction: Func | undefined = this.userDefinedFunctions.get(property);
