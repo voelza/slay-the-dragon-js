@@ -143,10 +143,10 @@ const visualInputContent = document.getElementById("visualInputContent")!;
 
 
 const controlIcons: Map<string, string> = new Map();
-controlIcons.set("moveNORTH", "⬆️");
-controlIcons.set("moveEAST", "➡️");
-controlIcons.set("moveWEST", "⬅️");
-controlIcons.set("moveSOUTH", "⬇️");
+controlIcons.set("moveNORTH", "🏃‍♂️⬆️");
+controlIcons.set("moveEAST", "🏃‍♂️➡️");
+controlIcons.set("moveWEST", "🏃‍♂️⬅️");
+controlIcons.set("moveSOUTH", "🏃‍♂️⬇️");
 controlIcons.set("attackNORTH", "🤺⬆️");
 controlIcons.set("attackSOUTH", "🤺⬇️");
 controlIcons.set("attackWEST", "🤺⬅️");
@@ -194,7 +194,7 @@ function createVisualInputFromASTStatement(stmt: Node): HTMLElement {
 
   if (func) {
     const funcEle = document.createElement("span");
-    funcEle.textContent = controlIcons.get(func + direction) ?? "UNDEF";
+    funcEle.textContent = `: ${controlIcons.get(func + direction) ?? "UNDEF"}`;
     btnBody.appendChild(funcEle);
   }
 
