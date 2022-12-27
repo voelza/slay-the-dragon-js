@@ -301,7 +301,7 @@ playBtn.addEventListener("click", () => {
       });
       renderVisualProgram();
     } else {
-      game!.init();
+      // game!.init();
     }
   } catch (e) {
     alert(e);

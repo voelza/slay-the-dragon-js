@@ -170,3 +170,26 @@ dialog {
 .drag-highlight {
   background-color: #646cff !important;
 }
+
+@keyframes swing {
+  0% {
+    background-color: gray;
+  }
+
+  25% {
+    transform: rotate(45deg);
+  }
+
+  50% {
+    background-color: red;
+  }
+
+  85% {
+    background-color: gray;
+  }
+
+  100% {
+    background-color: transparent;
+  }
+
+}

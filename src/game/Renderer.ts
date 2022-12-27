@@ -15,7 +15,8 @@ export type DragonRender = {
 
 export enum RenderType {
     LEVEL,
-    DIALOG
+    DIALOG,
+    ATTACK
 }
 
 export type LevelRender = {
@@ -23,7 +24,8 @@ export type LevelRender = {
     level: Level,
     knight: ChracterRender,
     dragon: DragonRender,
-    mage?: ChracterRender
+    mage?: ChracterRender,
+    attackPosition?: Position
 }
 
 export type DialogRender = {
@@ -58,13 +60,18 @@ function isOnTile(row: number, column: number, position: Position): boolean {
 }
 
 function renderLevel(element: Element, entry: LevelRender): void {
-    const { level, knight, dragon, mage } = entry;
+    const { level, knight, dragon, mage, attackPosition } = entry;
     element.innerHTML = "";
     for (let row = 0; row < level.tiles.length; row++) {
         const rowEle = document.createElement("div");
         rowEle.setAttribute("style", "display: flex;");
         for (let column = 0; column < level.tiles[row].length; column++) {
             const tile = renderTile(level.tiles[row][column]);
+
+            if (attackPosition && isOnTile(row, column, attackPosition)) {
+                addAttack(tile);
+            }
+
             if (!Array.isArray(dragon.position) && isOnTile(row, column, dragon!.position)) {
                 if (dragon!.hp > 0) {
                     addDragonToTile(tile, dragon!.hp!);
@@ -164,6 +171,20 @@ function addIndicator(tile: Element, label: string, color: string) {
     indicator.appendChild(innerInidicator);
     indicator.textContent = label;
     tile.appendChild(indicator);
+}
+
+function addAttack(tile: Element) {
+    const ele = document.createElement("div");
+    ele.setAttribute("style", `
+        position: absolute;
+        width: 5px;
+        height: 25px;
+        margin-top: 5px;
+        background-color: transparent;
+        animation-name: swing;
+        animation-duration: 1s;
+    `);
+    tile.appendChild(ele);
 }
 
 function renderDialog(render: DialogRender) {

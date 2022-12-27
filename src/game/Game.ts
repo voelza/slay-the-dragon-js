@@ -306,13 +306,14 @@ export class Game {
         });
     }
 
-    queueLevelRender() {
+    queueLevelRender(attackPosition: Position | undefined = undefined) {
         queueRender({
             type: RenderType.LEVEL,
             level: this.level,
             knight: { position: this.knight!.position, attack: this.knight!.attack },
             dragon: { position: this.dragon!.position, hp: this.dragon!.hp },
-            mage: this.mage ? { position: this.mage?.position, attack: this.mage!.attack } : undefined
+            mage: this.mage ? { position: this.mage?.position, attack: this.mage!.attack } : undefined,
+            attackPosition
         });
     }
 
@@ -375,11 +376,12 @@ export class Game {
     }
 
     attack(character: Character, direction: Direction) {
-        if (this.dragon!.isOnPosition(character.nextPosition(direction))) {
+        const attackPosition = character.nextPosition(direction);
+        if (this.dragon!.isOnPosition(attackPosition)) {
             this.dragon!.takeDamage(character.attack);
         }
         character.attack -= character.attack;
-        this.queueLevelRender();
+        this.queueLevelRender(attackPosition);
     }
 
     isNextTo(character: Character, direction: Direction, target: Interactable): boolean {
