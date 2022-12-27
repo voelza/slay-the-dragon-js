@@ -6,6 +6,7 @@ import { Lexer } from './lang/Lexer';
 import { Parser } from './lang/Parser';
 import { CallExpression, ExpressionStatement, Program, Node, DotExpression, Identifier } from './lang/Ast';
 import knightIcon from "./game/knight.svg";
+import mageIcon from "./game/mage.svg";
 
 const inputMap: Map<Element, string> = new Map();
 
@@ -126,31 +127,6 @@ function createVisualInput(body: string | HTMLElement): HTMLElement {
   return btn;
 }
 
-const dirs: ("NORTH" | "EAST" | "SOUTH" | "WEST")[] = ["NORTH", "EAST", "SOUTH", "WEST"];
-function createVisualInputStatement(func: string, statement: string) {
-  let dirIndex = 0;
-  let dir: "NORTH" | "EAST" | "SOUTH" | "WEST" = dirs[dirIndex];
-  const btn = createVisualInput(controlIcons.get(`${func}${dir}`)!);
-  btn.setAttribute("title", "Click to change direction.");
-
-  btn.addEventListener("click", () => {
-    dirIndex = (dirIndex + 1) % dirs.length;
-    dir = dirs[dirIndex];
-    btn.textContent = controlIcons.get(`${func}${dir}`)!;
-  });
-
-  btn.draggable = true;
-  btn.ondragstart = (ev) => {
-    ev.dataTransfer?.setData("statement", JSON.stringify({ text: func, statement: statement.replace("<DIR>", dir) }));
-    visualInputContent.classList.add("drag-highlight");
-  };
-  btn.ondragend = () => visualInputContent.classList.remove("drag-highlight");
-  return btn;
-}
-
-const visualInput = document.getElementById("visualInput")!;
-const visualInputControls = document.getElementById("visualInputControls")!;
-const visualInputContent = document.getElementById("visualInputContent")!;
 
 
 const controlIcons: Map<string, string> = new Map();
@@ -163,12 +139,108 @@ controlIcons.set("attackSOUTH", "🤺⬇️");
 controlIcons.set("attackWEST", "🤺⬅️");
 controlIcons.set("attackEAST", "🤺➡️");
 
+controlIcons.set("isNextToNORTH", "🔍⬆️");
+controlIcons.set("isNextToEAST", "🔍➡️");
+controlIcons.set("isNextToSOUTH", "🔍⬇️");
+controlIcons.set("isNextToWEST", "🔍⬅️");
+
+const interactableIcons: Map<string, string> = new Map();
+interactableIcons.set("dragon", "🐲");
+interactableIcons.set("ROAD", "🛣️");
+interactableIcons.set("WALL", "🧱");
+interactableIcons.set("HOLE", "🕳️");
+
+const dirIcons: Map<string, string> = new Map();
+dirIcons.set("NORTH", "⬆️");
+dirIcons.set("EAST", "➡️");
+dirIcons.set("SOUTH", "⬇️");
+dirIcons.set("WEST", "⬅️");
+
+const dirs: ("NORTH" | "EAST" | "SOUTH" | "WEST")[] = ["NORTH", "EAST", "SOUTH", "WEST"];
+const inters: ("dragon" | "ROAD" | "WALL" | "HOLE")[] = ["dragon", "ROAD", "WALL", "HOLE"];
+function createVisualInputStatement(func: string, statement: string) {
+  let dirIndex = 0;
+  let dir: "NORTH" | "EAST" | "SOUTH" | "WEST" = dirs[dirIndex];
+  let interIndex = 1;
+  let inter: "dragon" | "ROAD" | "WALL" | "HOLE" | "" = inters[interIndex];
+
+  const getLabel = () => {
+    const interLabel: string = statement.includes("<INTER>") ? interactableIcons.get(inter) ?? "" : "";
+    return controlIcons.get(`${func}${dir}`)! + interLabel;
+  }
+
+  const btn = createVisualInput(getLabel());
+  btn.setAttribute("title", "Click to change direction.");
+
+  let overlayOpen = false;
+  const overlay = document.createElement("div");
+  overlay.setAttribute("style", "position: absolute; display: flex; gap: 5px; background-color: #1a1a1a; padding: 5px;");
+
+  if (statement.includes("<DIR>")) {
+    for (let i = 0; i < dirs.length; i++) {
+      const d = dirs[i];
+      const select = document.createElement("div");
+      select.textContent = dirIcons.get(d)!;
+      select.setAttribute("style", "cursor: pointer;");
+      select.setAttribute("title", `Change direction to ${d}`);
+      select.addEventListener("click", () => {
+        dirIndex = i;
+        dir = dirs[dirIndex];
+        overlay.remove();
+        btn.textContent = getLabel();
+      });
+      overlay.appendChild(select);
+    }
+  }
+
+  if (statement.includes("<INTER>")) {
+    for (let i = 0; i < inters.length; i++) {
+      const d = inters[i];
+      const select = document.createElement("div");
+      select.textContent = interactableIcons.get(d)!;
+      select.setAttribute("style", "cursor: pointer;");
+      select.setAttribute("title", `Change to ${d}`);
+      select.addEventListener("click", () => {
+        interIndex = i;
+        inter = inters[interIndex];
+        overlay.remove();
+        btn.textContent = getLabel();
+      });
+      overlay.appendChild(select);
+    }
+  }
+
+  btn.addEventListener("click", () => {
+    if (overlayOpen) {
+      overlayOpen = false;
+      overlay.remove();
+    } else {
+      btn.appendChild(overlay);
+      overlayOpen = true;
+    }
+  });
+
+  btn.draggable = true;
+  btn.ondragstart = (ev) => {
+    ev.dataTransfer?.setData("statement", JSON.stringify({ text: func, statement: statement.replace("<DIR>", dir).replace("<INTER>", inter) }));
+    visualInputContent.classList.add("drag-highlight");
+  };
+  btn.ondragend = () => visualInputContent.classList.remove("drag-highlight");
+  return btn;
+}
+
+const visualInput = document.getElementById("visualInput")!;
+const visualInputControls = document.getElementById("visualInputControls")!;
+const visualInputContent = document.getElementById("visualInputContent")!;
+
+
 function createVisualInputFromASTStatement(stmt: Node): HTMLElement {
   const container = document.createElement("div");
 
   let character: "KNIGHT" | "MAGE" | "UNDEF" = "UNDEF";
   let func: string | undefined;
   let direction: "NORTH" | "EAST" | "SOUTH" | "WEST" | "UNDEF" = "UNDEF";
+  let interactable: "dragon" | "ROAD" | "WALL" | "WAY" | "" = "";
   if (stmt instanceof ExpressionStatement) {
     stmt = stmt.expression as Node;
   }
@@ -184,9 +256,13 @@ function createVisualInputFromASTStatement(stmt: Node): HTMLElement {
 
         if (stmt.func.right instanceof Identifier) {
           func = stmt.func.right.value;
-          if (func === "move" || func === "attack") {
+          if (func === "move" || func === "attack" || func === "isNextTo") {
             // @ts-ignore
             direction = stmt.args[0].string();
+            if (func === "isNextTo") {
+              // @ts-ignore
+              interactable = stmt.args[1].string();
+            }
           }
         }
       }
@@ -200,12 +276,14 @@ function createVisualInputFromASTStatement(stmt: Node): HTMLElement {
   charIcon.setAttribute("style", "width: 25px; height: 25px; object-fit: cover;");
   if (character === "KNIGHT") {
     charIcon.src = knightIcon;
+  } else if (character === "MAGE") {
+    charIcon.src = mageIcon;
   }
   btnBody.appendChild(charIcon);
 
   if (func) {
     const funcEle = document.createElement("span");
-    funcEle.textContent = `: ${controlIcons.get(func + direction) ?? "UNDEF"}`;
+    funcEle.textContent = `: ${controlIcons.get(func + direction) ?? "UNDEF"} ${interactableIcons.get(interactable) ?? ""}`;
     btnBody.appendChild(funcEle);
   }
 
@@ -243,6 +321,7 @@ visualInputContent.addEventListener("dragover", (e: DragEvent) => {
 
 visualInputControls.appendChild(createVisualInputStatement("move", "knight.move(<DIR>);"));
 visualInputControls.appendChild(createVisualInputStatement("attack", "knight.attack(<DIR>);"));
+// visualInputControls.appendChild(createVisualInputStatement("isNextTo", "knight.isNextTo(<DIR>, <INTER>);"));
 
 
 visualInputControls.addEventListener("drop", (ev: DragEvent) => {
