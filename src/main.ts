@@ -126,11 +126,22 @@ function createVisualInput(body: string | HTMLElement): HTMLElement {
   return btn;
 }
 
-function createVisualInputStatement(text: string, statement: string) {
-  const btn = createVisualInput(text);
+const dirs: ("NORTH" | "EAST" | "SOUTH" | "WEST")[] = ["NORTH", "EAST", "SOUTH", "WEST"];
+function createVisualInputStatement(func: string, statement: string) {
+  let dirIndex = 0;
+  let dir: "NORTH" | "EAST" | "SOUTH" | "WEST" = dirs[dirIndex];
+  const btn = createVisualInput(controlIcons.get(`${func}${dir}`)!);
+  btn.setAttribute("title", "Click to change direction.");
+
+  btn.addEventListener("click", () => {
+    dirIndex = (dirIndex + 1) % dirs.length;
+    dir = dirs[dirIndex];
+    btn.textContent = controlIcons.get(`${func}${dir}`)!;
+  });
+
   btn.draggable = true;
   btn.ondragstart = (ev) => {
-    ev.dataTransfer?.setData("statement", JSON.stringify({ text, statement }));
+    ev.dataTransfer?.setData("statement", JSON.stringify({ text: func, statement: statement.replace("<DIR>", dir) }));
     visualInputContent.classList.add("drag-highlight");
   };
   btn.ondragend = () => visualInputContent.classList.remove("drag-highlight");
@@ -230,14 +241,8 @@ visualInputContent.addEventListener("dragover", (e: DragEvent) => {
   e.preventDefault();
 });
 
-visualInputControls.appendChild(createVisualInputStatement(controlIcons.get("moveNORTH")!, "knight.move(NORTH);"));
-visualInputControls.appendChild(createVisualInputStatement(controlIcons.get("moveEAST")!, "knight.move(EAST);"));
-visualInputControls.appendChild(createVisualInputStatement(controlIcons.get("moveWEST")!, "knight.move(WEST);"));
-visualInputControls.appendChild(createVisualInputStatement(controlIcons.get("moveSOUTH")!, "knight.move(SOUTH);"));
-visualInputControls.appendChild(createVisualInputStatement(controlIcons.get("attackNORTH")!, "knight.attack(NORTH);"));
-visualInputControls.appendChild(createVisualInputStatement(controlIcons.get("attackSOUTH")!, "knight.attack(SOUTH);"));
-visualInputControls.appendChild(createVisualInputStatement(controlIcons.get("attackWEST")!, "knight.attack(WEST);"));
-visualInputControls.appendChild(createVisualInputStatement(controlIcons.get("attackEAST")!, "knight.attack(EAST);"));
+visualInputControls.appendChild(createVisualInputStatement("move", "knight.move(<DIR>);"));
+visualInputControls.appendChild(createVisualInputStatement("attack", "knight.attack(<DIR>);"));
 
 
 visualInputControls.addEventListener("drop", (ev: DragEvent) => {
