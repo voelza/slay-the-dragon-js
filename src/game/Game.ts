@@ -343,12 +343,18 @@ export class Game {
 
         const lexer = new Lexer(script);
         const parser = new Parser(lexer);
+        const program = parser.parseProgram();
+        if (parser.errors.length > 0) {
+            this.queueDeath(parser.errors.join("\n"));
+            return GameState.ERROR;
+        }
+
         const env = new Environment(createStandardEnv());
         env.set("knight", new Instance(this.knight!));
         if (this.mage) {
             env.set("mage", new Instance(this.mage));
         }
-        const langObject = evaluate(parser.parseProgram(), env);
+        const langObject = evaluate(program, env);
         if (langObject instanceof ErrorObject) {
             this.queueDeath(`Your battle plan is errornous!\n\nERROR: ${langObject.error}`);
             return GameState.ERROR;

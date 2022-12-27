@@ -1,5 +1,5 @@
 :root {
-  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+  font-family: Courier, Inter, Avenir, Helvetica, Arial, sans-serif;
   font-size: 16px;
   line-height: 24px;
   font-weight: 400;
@@ -116,9 +116,35 @@ button:focus-visible {
   border: none !important;
 }
 
+#visualInput {
+  height: 90%;
+  width: 95%;
+}
+
+#visualInputControls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 10px;
+}
+
+#visualInputContent {
+  background-color: #3b3b3b;
+  height: 80%;
+}
+
+
 dialog {
   border: none;
-  background-color: #2e3338;
+  background-color: gainsboro;
+}
+
+@media (prefers-color-scheme: dark) {
+  dialog {
+    border: none;
+    background-color: #2e3338;
+  }
 }
 
 .tabs {

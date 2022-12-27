@@ -15,8 +15,12 @@ export enum NodeType {
 export interface Node {
     type: NodeType,
 }
-export interface Expression extends Node { }
-export interface Statement extends Node { }
+export interface Expression extends Node {
+    string(): string
+}
+export interface Statement extends Node {
+    string(): string
+}
 
 export class Program implements Node {
     type: NodeType = NodeType.PROGRAM;
@@ -34,6 +38,10 @@ export class ExpressionStatement implements Statement {
     constructor(expression: Expression) {
         this.expression = expression;
     }
+
+    string(): string {
+        return this.expression.string() + ";";
+    }
 }
 
 export class Identifier implements Expression {
@@ -42,6 +50,9 @@ export class Identifier implements Expression {
 
     constructor(value: string) {
         this.value = value;
+    }
+    string(): string {
+        return this.value;
     }
 }
 
@@ -54,6 +65,9 @@ export class CallExpression implements Expression {
         this.func = func;
         this.args = args;
     }
+    string(): string {
+        return `${this.func.string()}(${this.args.map(a => a.string()).join(",")})`
+    }
 }
 
 export class DotExpression implements Expression {
@@ -65,6 +79,9 @@ export class DotExpression implements Expression {
         this.left = left;
         this.right = right;
     }
+    string(): string {
+        return `${this.left.string()}.${this.right.string()}`
+    }
 }
 
 export class NotExpression implements Expression {
@@ -74,6 +91,9 @@ export class NotExpression implements Expression {
     constructor(right: Expression) {
         this.right = right;
     }
+    string(): string {
+        return `not ${this.right.string()}`;
+    }
 }
 
 export class BlockStatement implements Statement {
@@ -82,6 +102,12 @@ export class BlockStatement implements Statement {
 
     constructor(statements: Statement[]) {
         this.statements = statements;
+    }
+    string(): string {
+        return `
+        {
+            ${this.statements.map(s => s.string()).join("\n")}
+        }`
     }
 }
 
@@ -96,6 +122,13 @@ export class IfStatement implements Statement {
         this.consequences = consequences;
         this.alternative = alternative;
     }
+    string(): string {
+        return `if(${this.condition.string()}) 
+        ${this.consequences.string()} 
+        ${this.alternative ?
+                `else ${this.alternative.string()}`
+                : ""}`
+    }
 }
 
 export class WhileStatement implements Statement {
@@ -107,6 +140,9 @@ export class WhileStatement implements Statement {
         this.condition = condition;
         this.body = body;
     }
+    string(): string {
+        return `while(${this.condition.string()})${this.body.string()}`
+    }
 }
 
 export class ExtendStatement implements Statement {
@@ -117,6 +153,9 @@ export class ExtendStatement implements Statement {
     constructor(whatToExtend: Identifier, extensions: FunctionStatement[]) {
         this.whatToExtend = whatToExtend;
         this.extensions = extensions;
+    }
+    string(): string {
+        return this.extensions.map(e => e.string()).join("\n");
     }
 
 }
@@ -131,5 +170,8 @@ export class FunctionStatement implements Statement {
         this.name = name;
         this.params = params;
         this.body = body;
+    }
+    string(): string {
+        return `function ${this.name.string()} (${this.params.map(p => p.string()).join(",")}) ${this.body.string()}`;
     }
 }
