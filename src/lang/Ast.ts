@@ -42,7 +42,7 @@ export class ExpressionStatement implements Statement {
     }
 
     string(): string {
-        return this.expression.string() + ";";
+        return this.expression.string();
     }
 }
 
@@ -68,7 +68,7 @@ export class CallExpression implements Expression {
         this.args = args;
     }
     string(): string {
-        return `${this.func.string()}(${this.args.map(a => a.string()).join(",")});`
+        return `${this.func.string()}(${this.args.map(a => a.string()).join(", ")});`
     }
 }
 
@@ -106,10 +106,7 @@ export class BlockStatement implements Statement {
         this.statements = statements;
     }
     string(): string {
-        return `
-        {
-            ${this.statements.map(s => s.string()).join("\n")}
-        }`
+        return `{${this.statements.map(s => s.string()).join("\n")}}`
     }
 }
 
@@ -125,11 +122,7 @@ export class IfStatement implements Statement {
         this.alternative = alternative;
     }
     string(): string {
-        return `if(${this.condition.string()}) 
-        ${this.consequences.string()} 
-        ${this.alternative ?
-                `else ${this.alternative.string()}`
-                : ""}`
+        return `if(${this.condition.string().replaceAll(";", "")}) ${this.consequences.string()}${this.alternative ? `else ${this.alternative.string()}` : ""}`
     }
 }
 
@@ -143,7 +136,7 @@ export class WhileStatement implements Statement {
         this.body = body;
     }
     string(): string {
-        return `while(${this.condition.string()})${this.body.string()}`
+        return `while(${this.condition.string().replaceAll(";", "")})${this.body.string()}`
     }
 }
 

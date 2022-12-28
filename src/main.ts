@@ -4,7 +4,7 @@ import './style.css';
 import { LevelDefinition, levels } from './game/Levels';
 import { Lexer } from './lang/Lexer';
 import { Parser } from './lang/Parser';
-import { CallExpression, ExpressionStatement, Program, Node, DotExpression, Identifier } from './lang/Ast';
+import { CallExpression, ExpressionStatement, Program, Node, DotExpression, Identifier, IfStatement } from './lang/Ast';
 import knightIcon from "./game/knight.svg";
 import mageIcon from "./game/mage.svg";
 
@@ -229,11 +229,23 @@ function createVisualInputStatement(func: string, statement: string) {
   return btn;
 }
 
+function createVisualControlFlowStatement(func: string) {
+  const btn = createVisualInput(func);
+  btn.draggable = true;
+  btn.ondragstart = (ev) => {
+    ev.dataTransfer?.setData("statement", JSON.stringify({ text: func, type: "IF" }));
+    visualInputContent.classList.add("drag-highlight");
+  };
+  btn.ondragend = () => visualInputContent.classList.remove("drag-highlight");
+  return btn;
+}
+
 const visualInput = document.getElementById("visualInput")!;
 const visualInputControls = document.getElementById("visualInputControls")!;
 const visualInputContent = document.getElementById("visualInputContent")!;
 
 
+let droppingWithin = false;
 function createVisualInputFromASTStatement(stmt: Node): HTMLElement {
   const container = document.createElement("div");
 
@@ -245,6 +257,7 @@ function createVisualInputFromASTStatement(stmt: Node): HTMLElement {
     stmt = stmt.expression as Node;
   }
 
+  const btnBody = document.createElement("div");
   if (stmt instanceof CallExpression) {
     if (stmt.func instanceof DotExpression) {
       if (stmt.func.left instanceof Identifier) {
@@ -267,24 +280,87 @@ function createVisualInputFromASTStatement(stmt: Node): HTMLElement {
         }
       }
     }
-  }
 
-  const btnBody = document.createElement("div");
-  btnBody.setAttribute("style", "display: flex; align-items: center; gap: 5px;");
+    btnBody.setAttribute("style", "display: flex; align-items: center; gap: 5px;");
 
-  const charIcon = document.createElement("img");
-  charIcon.setAttribute("style", "width: 25px; height: 25px; object-fit: cover;");
-  if (character === "KNIGHT") {
-    charIcon.src = knightIcon;
-  } else if (character === "MAGE") {
-    charIcon.src = mageIcon;
-  }
-  btnBody.appendChild(charIcon);
+    const charIcon = document.createElement("img");
+    charIcon.setAttribute("style", "width: 25px; height: 25px; object-fit: cover;");
+    if (character === "KNIGHT") {
+      charIcon.src = knightIcon;
+    } else if (character === "MAGE") {
+      charIcon.src = mageIcon;
+    }
+    btnBody.appendChild(charIcon);
 
-  if (func) {
-    const funcEle = document.createElement("span");
-    funcEle.textContent = `: ${controlIcons.get(func + direction) ?? "UNDEF"} ${interactableIcons.get(interactable) ?? ""}`;
-    btnBody.appendChild(funcEle);
+    if (func) {
+      const funcEle = document.createElement("span");
+      funcEle.textContent = `: ${controlIcons.get(func + direction) ?? "UNDEF"} ${interactableIcons.get(interactable) ?? ""}`;
+      btnBody.appendChild(funcEle);
+    }
+  } else if (stmt instanceof IfStatement) {
+    btnBody.setAttribute("style", "display: flex; flex-direction: column; gap: 5px;");
+
+
+    let currentCondition: string = stmt.condition.string();
+    const bodyStr = stmt.consequences.string();
+    let currentBody: string = bodyStr.substring(1, bodyStr.length - 1).replaceAll("\n", "");
+    const currentIfStmt = () => `if(${currentCondition}) {${currentBody}}`
+
+
+    const ifIcon = document.createElement("span");
+    ifIcon.textContent = "IF";
+    btnBody.appendChild(ifIcon);
+
+    const conditionContainer = document.createElement("div");
+    conditionContainer.setAttribute("style", "padding: 5px; min-height: 50px; background-color: rgba(255, 255, 255, .1); border-radius: 5px;");
+
+    if (stmt.condition instanceof CallExpression) {
+      conditionContainer.appendChild(createVisualInputFromASTStatement(stmt.condition));
+    }
+
+    conditionContainer.addEventListener("drop", (ev: DragEvent) => {
+      droppingWithin = true;
+
+      const prevStmt = currentIfStmt();
+
+      const data = JSON.parse(ev.dataTransfer!.getData("statement"));
+      currentCondition = data.statement;
+      const newStmt = currentIfStmt();
+
+      const currentCode = inputMap.get(activeTab) ?? "";
+      inputMap.set(activeTab, currentCode.replace(prevStmt, newStmt));
+
+      initActionCounter();
+      renderVisualProgram();
+    });
+    conditionContainer.addEventListener("dragover", (e: DragEvent) => {
+      e.preventDefault();
+    });
+    btnBody.appendChild(conditionContainer);
+
+    const bodyContainer = document.createElement("div");
+    bodyContainer.setAttribute("style", "padding: 5px; min-height: 50px; background-color: rgba(255, 255, 255, .1); border-radius: 5px; display: flex; flex-direction: column; gap: 5px;");
+    bodyContainer.addEventListener("drop", (ev: DragEvent) => {
+      droppingWithin = true;
+
+      const prevStmt = currentIfStmt();
+
+      const data = JSON.parse(ev.dataTransfer!.getData("statement"));
+      currentBody += data.statement;
+      currentBody = currentBody.replaceAll("\n", "");
+      const newStmt = currentIfStmt();
+
+      const currentCode = inputMap.get(activeTab) ?? "";
+      inputMap.set(activeTab, currentCode.replace(prevStmt, newStmt));
+
+      initActionCounter();
+      renderVisualProgram();
+    });
+    bodyContainer.addEventListener("dragover", (e: DragEvent) => {
+      e.preventDefault();
+    });
+    stmt.consequences.statements.forEach(s => bodyContainer.appendChild(createVisualInputFromASTStatement(s)));
+    btnBody.appendChild(bodyContainer);
   }
 
   container.appendChild(createVisualInput(btnBody));
@@ -309,9 +385,20 @@ function renderVisualProgram() {
 }
 
 visualInputContent.addEventListener("drop", (ev: DragEvent) => {
+  if (droppingWithin) {
+    droppingWithin = false;
+    return;
+  }
+
   const data = JSON.parse(ev.dataTransfer!.getData("statement"));
   const currentCode = inputMap.get(activeTab) ?? "";
-  inputMap.set(activeTab, currentCode + "\n" + data.statement);
+
+  let stmt = data.statement;
+  if (data.type === "IF") {
+    stmt = `if(null) {}`;
+  }
+
+  inputMap.set(activeTab, currentCode + "\n" + stmt);
   initActionCounter();
   renderVisualProgram();
 });
@@ -321,7 +408,8 @@ visualInputContent.addEventListener("dragover", (e: DragEvent) => {
 
 visualInputControls.appendChild(createVisualInputStatement("move", "knight.move(<DIR>);"));
 visualInputControls.appendChild(createVisualInputStatement("attack", "knight.attack(<DIR>);"));
-// visualInputControls.appendChild(createVisualInputStatement("isNextTo", "knight.isNextTo(<DIR>, <INTER>);"));
+visualInputControls.appendChild(createVisualControlFlowStatement("IF"));
+visualInputControls.appendChild(createVisualInputStatement("isNextTo", "knight.isNextTo(<DIR>, <INTER>)"));
 
 
 visualInputControls.addEventListener("drop", (ev: DragEvent) => {
