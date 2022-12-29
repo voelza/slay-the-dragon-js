@@ -34,21 +34,21 @@ export type LevelDefinition = {
 export const levels: LevelDefinition[] = [
     {
         level: [
-            [Tile.ROAD, Tile.ROAD, Tile.ROAD],
-        ],
-        knight: { position: { row: 0, column: 0 } },
-        dragon: { position: { row: 0, column: 2 }, hp: 1 },
-        actions: 2,
-        exludedStatements: [StatementExlude.IS_NEXT_TO, StatementExlude.IF, StatementExlude.WHILE, StatementExlude.NOT],
-    },
-    {
-        level: [
             [Tile.HOLE, Tile.ROAD, Tile.ROAD],
             [Tile.ROAD, Tile.ROAD, Tile.HOLE],
         ],
         knight: { position: { row: 1, column: 0 } },
         dragon: { position: { row: 0, column: 2 }, hp: 1 },
         actions: 3
+    },
+    {
+        level: [
+            [Tile.ROAD, Tile.ROAD, Tile.ROAD],
+        ],
+        knight: { position: { row: 0, column: 0 } },
+        dragon: { position: { row: 0, column: 2 }, hp: 1 },
+        actions: 2,
+        exludedStatements: [StatementExlude.IS_NEXT_TO, StatementExlude.IF, StatementExlude.WHILE, StatementExlude.NOT],
     },
     {
         level: [

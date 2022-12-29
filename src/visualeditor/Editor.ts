@@ -498,7 +498,6 @@ function addControlFlowStmt(element: HTMLElement, stmt: IfStatement | WhileState
     flex-direction: column; 
     gap: 5px;
     width: 100%;
-    padding: 0;
     `);
 
     const conditionContainer = document.createElement("div");
@@ -552,6 +551,7 @@ function addControlFlowStmt(element: HTMLElement, stmt: IfStatement | WhileState
             display: flex; 
             flex-direction: column; 
             gap: 5px;
+            padding-bottom: 15px;
     `);
         stmt.body.forEach(s => body.appendChild(
             renderInnerLevelStmt(
