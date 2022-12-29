@@ -74,13 +74,13 @@ class IsNextToStatement implements UIStatement {
 }
 
 class NotStatement implements UIStatement {
-    isNextToStatement: IsNextToStatement;
+    condition: UIStatement | undefined;
 
-    constructor(isNextToStatement: IsNextToStatement) {
-        this.isNextToStatement = isNextToStatement;
+    constructor(condition: UIStatement | undefined = undefined) {
+        this.condition = condition;
     }
     toCode(): string {
-        return `not ${this.isNextToStatement.toCode()}`;
+        return `not ${this.condition?.toCode()}`;
     }
     icon(): string {
         return "🙅‍♀️";
@@ -253,11 +253,12 @@ function createControls(ast: ReactiveAST): Element {
         margin: 10px;
     `);
 
-    controls.appendChild(createControlItemWithOverlay("🏃‍♂️", (dir) => new MoveStatement("knight", dir)));
-    controls.appendChild(createControlItemWithOverlay("🤺", (dir) => new AttackStatement("knight", dir)));
-    controls.appendChild(createControlItemWithOverlay("🔍", (dir, inter) => new IsNextToStatement("knight", dir, inter!), true));
-    controls.appendChild(createControlFlowItem("IF", () => new IfStatement()));
-    controls.appendChild(createControlFlowItem("♾️", () => new WhileStatement()));
+    controls.appendChild(createControlItemWithOverlay(MoveStatement.prototype.icon(), (dir) => new MoveStatement("knight", dir)));
+    controls.appendChild(createControlItemWithOverlay(AttackStatement.prototype.icon(), (dir) => new AttackStatement("knight", dir)));
+    controls.appendChild(createControlItemWithOverlay(IsNextToStatement.prototype.icon(), (dir, inter) => new IsNextToStatement("knight", dir, inter!), true));
+    controls.appendChild(createControlFlowItem(IfStatement.prototype.icon(), () => new IfStatement()));
+    controls.appendChild(createControlFlowItem(WhileStatement.prototype.icon(), () => new WhileStatement()));
+    controls.appendChild(createControlFlowItem(NotStatement.prototype.icon(), () => new NotStatement()));
 
     addStmtDrop(controls, "control", ast.remove.bind(ast));
     return controls;
@@ -377,6 +378,8 @@ function renderStmt(stmt: UIStatement, ast: ReactiveAST): HTMLElement {
         addControlFlowStmt(element, stmt, ast);
     } else if (stmt instanceof WhileStatement) {
         addControlFlowStmt(element, stmt, ast);
+    } else if (stmt instanceof NotStatement) {
+        addControlFlowStmt(element, stmt, ast);
     }
 
     return element;
@@ -394,7 +397,7 @@ function addIsNextToStmt(element: HTMLElement, stmt: IsNextToStatement): void {
     element.appendChild(createMethod(`: ${stmt.icon()}${DIRECTION_ICONS.get(direction)}${INTERACTABLE_ICONS.get(interactable)}`));
 }
 
-function addControlFlowStmt(element: HTMLElement, stmt: IfStatement | WhileStatement, ast: ReactiveAST): void {
+function addControlFlowStmt(element: HTMLElement, stmt: IfStatement | WhileStatement | NotStatement, ast: ReactiveAST): void {
     const controlFlowStmt = createBase();
     controlFlowStmt.setAttribute("style", controlFlowStmt.getAttribute("style") + `
     display: flex; 
@@ -442,38 +445,40 @@ function addControlFlowStmt(element: HTMLElement, stmt: IfStatement | WhileState
         ast.notify();
     });
 
-    const body = document.createElement("div");
-    body.setAttribute("style", `
-    padding: 5px; 
-    min-height: 50px; 
-    background-color: rgba(255, 255, 255, .1); 
-    border-radius: 5px; 
-    display: flex; 
-    flex-direction: column; 
-    gap: 5px;`);
-    stmt.body.forEach(s => body.appendChild(
-        renderInnerLevelStmt(
-            s,
-            () => {
-                stmt.body.splice(stmt.body.indexOf(s), 1);
-                ast.notify();
-            },
-            ast
-        )
-    )
-    );
-    addStmtDrop(body, "program", (bodyStmt) => {
-        stmt.body.push(bodyStmt);
-        ast.notify();
-    });
-
-
     conditionContainer.appendChild(conditionArea);
     controlFlowStmt.appendChild(conditionContainer);
-    controlFlowStmt.appendChild(body);
+
+    if (!(stmt instanceof NotStatement)) {
+        const body = document.createElement("div");
+        body.setAttribute("style", `
+            padding: 5px; 
+            min-height: 50px; 
+            background-color: rgba(255, 255, 255, .1); 
+            border-radius: 5px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 5px;
+    `);
+        stmt.body.forEach(s => body.appendChild(
+            renderInnerLevelStmt(
+                s,
+                () => {
+                    stmt.body.splice(stmt.body.indexOf(s), 1);
+                    ast.notify();
+                },
+                ast
+            )
+        )
+        );
+        addStmtDrop(body, "program", (bodyStmt) => {
+            stmt.body.push(bodyStmt);
+            ast.notify();
+        });
+
+        controlFlowStmt.appendChild(body);
+    }
     element.appendChild(controlFlowStmt);
 }
-
 
 function createCharacterIcon(character: Character): Element {
     const charIcon = document.createElement("img");
