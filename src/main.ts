@@ -4,7 +4,7 @@ import './style.css';
 import { LevelDefinition, levels } from './game/Levels';
 import { createEditor } from './visualeditor/Editor';
 
-const [codeGetter, resetter] = createEditor(document.getElementById("visualInput")!);
+const [codeGetter, resetter] = createEditor(document.getElementById("visualInput")!, initActionCounter);
 
 const levelLabel = document.getElementById("levelLabel")!;
 
@@ -40,6 +40,7 @@ playBtn.addEventListener("click", () => {
     }
   } catch (e) {
     alert(e);
+    game!.init();
   }
 });
 

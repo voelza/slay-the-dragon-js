@@ -123,9 +123,9 @@ class WhileStatement implements UIStatement {
 
 export type CodeGetter = () => string;
 export type Resetter = () => void;
-type AstObserver = () => void;
+type AstObserver = (ast: UIStatement[]) => void;
 
-class ReactiveAST {
+class AST {
     ast: UIStatement[];
     observers: AstObserver[];
     constructor() {
@@ -153,7 +153,7 @@ class ReactiveAST {
     }
 
     notify() {
-        this.observers.forEach(o => o());
+        this.observers.forEach(o => o(this.ast));
     }
 }
 
@@ -218,8 +218,8 @@ function addStmtDrop(element: HTMLElement, group: string, target: ((stmt: UIStat
     groupDropAreas.set(group, dragAreaGroup);
 }
 
-export function createEditor(element: Element): [CodeGetter, Resetter] {
-    const ast = new ReactiveAST();
+export function createEditor(element: Element, stateObserver: (ast: UIStatement[]) => void): [CodeGetter, Resetter] {
+    const ast = new AST();
 
     const vsEditor = document.createElement("div");
     vsEditor.setAttribute("style", `
@@ -237,13 +237,14 @@ export function createEditor(element: Element): [CodeGetter, Resetter] {
     element.appendChild(vsEditor);
 
     ast.addObserver(() => renderProgram(vsInput, ast));
+    ast.addObserver(stateObserver);
     return [
         () => ast.ast.map(stmt => stmt.toCode()).join("\n"),
         () => ast.reset()
     ];
 }
 
-function createControls(ast: ReactiveAST): Element {
+function createControls(ast: AST): Element {
     const controls = document.createElement("div");
     controls.setAttribute("style", `
         display: flex;
@@ -328,7 +329,7 @@ function createControlItemWithOverlay(label: string, supplier: (direction: Direc
     return item;
 }
 
-function createVSInput(ast: ReactiveAST) {
+function createVSInput(ast: AST) {
     const vsInput = document.createElement("div");
     vsInput.setAttribute("style", `
         background-color: #3b3b3b;
@@ -345,26 +346,26 @@ function createVSInput(ast: ReactiveAST) {
     return vsInput;
 }
 
-function renderProgram(element: Element, ast: ReactiveAST): void {
+function renderProgram(element: Element, ast: AST): void {
     element.innerHTML = "";
     for (const stmt of ast.ast) {
         element.appendChild(renderTopLevelStmt(stmt, ast));
     }
 }
 
-function renderTopLevelStmt(stmt: UIStatement, ast: ReactiveAST): Element {
+function renderTopLevelStmt(stmt: UIStatement, ast: AST): Element {
     const element = renderStmt(stmt, ast);
     addStmtDrag(element, () => stmt, "control");
     return element;
 }
 
-function renderInnerLevelStmt(stmt: UIStatement, remover: () => void, ast: ReactiveAST): Element {
+function renderInnerLevelStmt(stmt: UIStatement, remover: () => void, ast: AST): Element {
     const element = renderStmt(stmt, ast);
     addStmtDrag(element, () => { remover(); return undefined; }, "control");
     return element;
 }
 
-function renderStmt(stmt: UIStatement, ast: ReactiveAST): HTMLElement {
+function renderStmt(stmt: UIStatement, ast: AST): HTMLElement {
     const element = createBase();
     element.setAttribute("style", element.getAttribute("style")! + "display: flex; align-items: center; gap: 5px;");
 
@@ -397,7 +398,7 @@ function addIsNextToStmt(element: HTMLElement, stmt: IsNextToStatement): void {
     element.appendChild(createMethod(`: ${stmt.icon()}${DIRECTION_ICONS.get(direction)}${INTERACTABLE_ICONS.get(interactable)}`));
 }
 
-function addControlFlowStmt(element: HTMLElement, stmt: IfStatement | WhileStatement | NotStatement, ast: ReactiveAST): void {
+function addControlFlowStmt(element: HTMLElement, stmt: IfStatement | WhileStatement | NotStatement, ast: AST): void {
     const controlFlowStmt = createBase();
     controlFlowStmt.setAttribute("style", controlFlowStmt.getAttribute("style") + `
     display: flex; 
