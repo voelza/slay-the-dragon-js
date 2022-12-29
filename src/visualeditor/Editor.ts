@@ -3,6 +3,7 @@ import { LevelDefinition } from "../game/Levels";
 import mageIcon from "../game/mage.svg";
 
 type Character = "knight" | "mage";
+
 type Direction = "NORTH" | "EAST" | "SOUTH" | "WEST";
 const ALL_DIRECTIONS: Direction[] = ["NORTH", "EAST", "SOUTH", "WEST"];
 const DIRECTION_ICONS: Map<Direction, string> = new Map();
@@ -54,6 +55,23 @@ class AttackStatement implements UIStatement {
     icon(): string {
         return "🤺"
     }
+}
+
+class SupportStatement implements UIStatement {
+    character: Character;
+    direction: Direction;
+
+    constructor(character: Character, direction: Direction) {
+        this.character = character;
+        this.direction = direction;
+    }
+    toCode(): string {
+        return `${this.character}.support(${this.direction});`;
+    }
+    icon(): string {
+        return "✨";
+    }
+
 }
 
 class IsNextToStatement implements UIStatement {
@@ -260,7 +278,7 @@ export function createEditor(element: Element, levelDef: LevelDefinition, stateO
         width: 100%;
     `);
 
-    const controls = createControls(ast);
+    const controls = createControls(levelDef, ast);
     vsEditor.appendChild(controls);
 
     const tabs = createTabs(levelDef, ast);
@@ -279,7 +297,7 @@ export function createEditor(element: Element, levelDef: LevelDefinition, stateO
     ];
 }
 
-function createControls(ast: AST): Element {
+function createControls(levelDef: LevelDefinition, ast: AST): Element {
     const controls = document.createElement("div");
     controls.setAttribute("style", `
         display: flex;
@@ -289,36 +307,67 @@ function createControls(ast: AST): Element {
         padding: 15px;
     `);
 
-    controls.appendChild(createControlItemWithOverlay(MoveStatement.prototype.icon(), (dir) => new MoveStatement("knight", dir)));
-    controls.appendChild(createControlItemWithOverlay(AttackStatement.prototype.icon(), (dir) => new AttackStatement("knight", dir)));
-    controls.appendChild(createControlItemWithOverlay(IsNextToStatement.prototype.icon(), (dir, inter) => new IsNextToStatement("knight", dir, inter!), true));
-    controls.appendChild(createControlFlowItem(IfStatement.prototype.icon(), () => new IfStatement()));
-    controls.appendChild(createControlFlowItem(WhileStatement.prototype.icon(), () => new WhileStatement()));
-    controls.appendChild(createControlFlowItem(NotStatement.prototype.icon(), () => new NotStatement()));
+    controls.appendChild(createControlItem(MoveStatement.prototype, levelDef, (char, dir) => new MoveStatement(char, dir)));
+    controls.appendChild(createControlItem(AttackStatement.prototype, levelDef, (char, dir) => new AttackStatement(char, dir)));
+    if (levelDef.mage) {
+        controls.appendChild(createControlItem(SupportStatement.prototype, levelDef, (char, dir) => new SupportStatement(char, dir)));
+    }
+    controls.appendChild(createControlItem(IsNextToStatement.prototype, levelDef, (char, dir, inter) => new IsNextToStatement(char, dir, inter!), true));
+    controls.appendChild(createControlFlowItem(IfStatement.prototype, () => new IfStatement()));
+    controls.appendChild(createControlFlowItem(WhileStatement.prototype, () => new WhileStatement()));
+    controls.appendChild(createControlFlowItem(NotStatement.prototype, () => new NotStatement()));
 
     addStmtDrop(controls, "control", ast.remove.bind(ast));
     return controls;
 }
 
-function createControlFlowItem(label: string, supplier: () => UIStatement): Element {
+function createControlFlowItem(label: UIStatement, supplier: () => UIStatement): Element {
     const item = createBase();
-    item.textContent = label;
+    item.textContent = label.icon();
     addStmtDrag(item, () => supplier(), "program");
     return item;
 }
 
-function createControlItemWithOverlay(label: string, supplier: (direction: Direction, interactable: Interactable | undefined) => UIStatement, withInter: boolean = false): Element {
+function createControlItem(label: UIStatement, levelDef: LevelDefinition, supplier: (character: Character, direction: Direction, interactable: Interactable | undefined) => UIStatement, withInter: boolean = false): Element {
+    const levelHasMultipleCharacters = levelDef.mage !== undefined;
+
     const item = createBase();
+    let character: Character = "knight";
     let currentDirection: Direction = ALL_DIRECTIONS[0];
     let currentInteractable: Interactable | undefined = withInter ? ALL_INTERACTABLES[0] : undefined;
 
     const updateLabel = () => {
-        item.textContent = `${label}${DIRECTION_ICONS.get(currentDirection)}${currentInteractable ? INTERACTABLE_ICONS.get(currentInteractable) : ""}`;
+        item.innerHTML = "";
+        if (levelHasMultipleCharacters) {
+            item.appendChild(createCharacterIcon(character));
+        }
+        const txt = document.createElement("span");
+        txt.textContent = `${levelHasMultipleCharacters ? ": " : ""} ${label.icon()}${DIRECTION_ICONS.get(currentDirection)}${currentInteractable ? INTERACTABLE_ICONS.get(currentInteractable) : ""}`;
+        item.appendChild(txt);
     }
     updateLabel();
 
     const overlay = document.createElement("div");
     overlay.setAttribute("style", "position: absolute; display: flex; gap: 5px; background-color: #1a1a1a; padding: 5px;");
+
+    if (levelHasMultipleCharacters) {
+        const knight = createCharacterIcon("knight");
+        knight.onclick = () => {
+            character = "knight";
+            overlay.remove();
+            updateLabel();
+        };
+
+        const mage = createCharacterIcon("mage");
+        mage.onclick = () => {
+            character = "mage";
+            overlay.remove();
+            updateLabel();
+        };
+
+        overlay.appendChild(knight);
+        overlay.appendChild(mage);
+    }
 
     for (const direction of ALL_DIRECTIONS) {
         const select = document.createElement("div");
@@ -359,7 +408,7 @@ function createControlItemWithOverlay(label: string, supplier: (direction: Direc
         }
     };
 
-    addStmtDrag(item, () => supplier(currentDirection, currentInteractable), "program");
+    addStmtDrag(item, () => supplier(character, currentDirection, currentInteractable), "program");
 
     return item;
 }
@@ -407,6 +456,8 @@ function renderStmt(stmt: UIStatement, ast: AST): HTMLElement {
     if (stmt instanceof MoveStatement) {
         addDirectionStmt(element, stmt);
     } else if (stmt instanceof AttackStatement) {
+        addDirectionStmt(element, stmt);
+    } else if (stmt instanceof SupportStatement) {
         addDirectionStmt(element, stmt);
     } else if (stmt instanceof IsNextToStatement) {
         addIsNextToStmt(element, stmt);
@@ -516,9 +567,9 @@ function addControlFlowStmt(element: HTMLElement, stmt: IfStatement | WhileState
     element.appendChild(controlFlowStmt);
 }
 
-function createCharacterIcon(character: Character): Element {
+function createCharacterIcon(character: Character): HTMLElement {
     const charIcon = document.createElement("img");
-    charIcon.setAttribute("style", "width: 25px; height: 25px; object-fit: cover;");
+    charIcon.setAttribute("style", "width: 1rem; height: 1rem; object-fit: cover;");
     if (character === "knight") {
         charIcon.src = knightIcon;
     } else if (character === "mage") {
