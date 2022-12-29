@@ -320,9 +320,11 @@ function renderStmt(stmt: UIStatement): Element {
     element.setAttribute("style", element.getAttribute("style")! + "display: flex; align-items: center; gap: 5px;");
 
     if (stmt instanceof MoveStatement) {
-        addMoveStmt(element, stmt);
+        addDirectionStmt(element, stmt);
     } else if (stmt instanceof AttackStatement) {
-        addAttackStmt(element, stmt);
+        addDirectionStmt(element, stmt);
+    } else if (stmt instanceof IsNextToStatement) {
+        addIsNextToStmt(element, stmt);
     }
 
     addStmtDrag(element, () => stmt, "control");
@@ -330,16 +332,16 @@ function renderStmt(stmt: UIStatement): Element {
     return element;
 }
 
-function addMoveStmt(element: HTMLElement, stmt: MoveStatement): void {
-    const { character } = stmt;
+function addDirectionStmt(element: HTMLElement, stmt: MoveStatement | AttackStatement): void {
+    const { character, direction } = stmt;
     element.appendChild(createCharacterIcon(character));
-    element.appendChild(createMethod(`: ${stmt.icon()}${DIRECTION_ICONS.get(stmt.direction)}`))
+    element.appendChild(createMethod(`: ${stmt.icon()}${DIRECTION_ICONS.get(direction)}`));
 }
 
-function addAttackStmt(element: HTMLElement, stmt: AttackStatement): void {
-    const { character } = stmt;
+function addIsNextToStmt(element: HTMLElement, stmt: IsNextToStatement): void {
+    const { character, direction, interactable } = stmt;
     element.appendChild(createCharacterIcon(character));
-    element.appendChild(createMethod(`: ${stmt.icon()}${DIRECTION_ICONS.get(stmt.direction)}`))
+    element.appendChild(createMethod(`: ${stmt.icon()}${DIRECTION_ICONS.get(direction)}${INTERACTABLE_ICONS.get(interactable)}`));
 }
 
 function createCharacterIcon(character: Character): Element {
