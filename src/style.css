@@ -121,25 +121,6 @@ button:focus-visible {
   width: 95%;
 }
 
-#visualInputControls {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin: 10px;
-}
-
-#visualInputContent {
-  background-color: #3b3b3b;
-  height: 80%;
-  overflow: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: 5px;
-  box-sizing: border-box;
-}
-
 
 dialog {
   border: none;
