@@ -123,14 +123,18 @@ class WhileStatement implements UIStatement {
 
 export type CodeGetter = () => string;
 export type Resetter = () => void;
-type AstObserver = (ast: UIStatement[]) => void;
+type AstObserver = () => void;
 
 class AST {
     ast: UIStatement[];
     observers: AstObserver[];
+    tabASTMap: Map<string, UIStatement[]>;
     constructor() {
         this.ast = [];
         this.observers = [];
+
+        this.tabASTMap = new Map();
+        this.tabASTMap.set("main", this.ast);
     }
 
     push(stmt: UIStatement) {
@@ -148,12 +152,37 @@ class AST {
         this.notify();
     }
 
+    changeTab(tab: string) {
+        let tabAst = this.tabASTMap.get(tab);
+        if (!tabAst) {
+            tabAst = [];
+            this.tabASTMap.set(tab, tabAst);
+        }
+        this.ast = tabAst;
+        this.notify();
+    }
+
     addObserver(observer: AstObserver) {
         this.observers.push(observer);
     }
 
     notify() {
-        this.observers.forEach(o => o(this.ast));
+        this.observers.forEach(o => o());
+    }
+
+    toCode(): string {
+        let code = "";
+        for (const [tab, ast] of this.tabASTMap.entries()) {
+            if (tab === "main") {
+                continue;
+            }
+            code += `extend ${tab} {${ast.map(stmt => stmt.toCode()).join("\n")}}`;
+        }
+
+        code += "\n";
+
+        const mainProgram = this.tabASTMap.get("main")!.map(stmt => stmt.toCode()).join("\n");
+        return code + mainProgram;
     }
 }
 
@@ -218,7 +247,7 @@ function addStmtDrop(element: HTMLElement, group: string, target: ((stmt: UIStat
     groupDropAreas.set(group, dragAreaGroup);
 }
 
-export function createEditor(element: Element, stateObserver: (ast: UIStatement[]) => void): [CodeGetter, Resetter] {
+export function createEditor(element: Element, stateObserver: () => void): [CodeGetter, Resetter] {
     const ast = new AST();
 
     const vsEditor = document.createElement("div");
@@ -231,6 +260,9 @@ export function createEditor(element: Element, stateObserver: (ast: UIStatement[
     const controls = createControls(ast);
     vsEditor.appendChild(controls);
 
+    const tabs = createTabs(ast);
+    vsEditor.appendChild(tabs);
+
     const vsInput = createVSInput(ast);
     vsEditor.appendChild(vsInput);
 
@@ -239,7 +271,7 @@ export function createEditor(element: Element, stateObserver: (ast: UIStatement[
     ast.addObserver(() => renderProgram(vsInput, ast));
     ast.addObserver(stateObserver);
     return [
-        () => ast.ast.map(stmt => stmt.toCode()).join("\n"),
+        () => ast.toCode(),
         () => ast.reset()
     ];
 }
@@ -251,7 +283,7 @@ function createControls(ast: AST): Element {
         align-items: center;
         flex-wrap: wrap;
         gap: 5px;
-        margin: 10px;
+        padding: 15px;
     `);
 
     controls.appendChild(createControlItemWithOverlay(MoveStatement.prototype.icon(), (dir) => new MoveStatement("knight", dir)));
@@ -512,4 +544,33 @@ function createBase(): HTMLElement {
     transition: border-color 0.25s;
     `);
     return input;
+}
+
+let activeTab: Element | undefined;
+function createTabs(ast: AST): Element {
+    const tabs = document.createElement("div");
+    tabs.classList.add("tabs");
+
+    tabs.appendChild(createTab(ast, "main", true));
+    tabs.appendChild(createTab(ast, "knight"));
+    return tabs;
+}
+
+function createTab(ast: AST, label: string, active: boolean = false): Element {
+    const tab = document.createElement("div");
+    tab.textContent = label;
+
+    tab.classList.add("tab");
+    if (active) {
+        activeTab = tab;
+        tab.classList.add("active");
+    }
+
+    tab.onclick = () => {
+        activeTab?.classList.remove("active");
+        activeTab = tab;
+        activeTab.classList.add("active");
+        ast.changeTab(label);
+    }
+    return tab;
 }
