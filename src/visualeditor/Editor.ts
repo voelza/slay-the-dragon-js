@@ -96,7 +96,7 @@ class IfStatement implements UIStatement {
         this.body = body;
     }
     toCode(): string {
-        return `if(${this.condition?.toCode().replaceAll(";", "")}){${this.body.map(s => s.toCode()).join("")}}`;
+        return `if(${this.condition?.toCode().replaceAll(";", "")}){${this.body.map(s => s.toCode()).join("")}}`
     }
     icon(): string {
         return "IF";
@@ -156,23 +156,27 @@ class ReactiveAST {
     }
 }
 
-let draggedStmt: UIStatement | undefined;
+let dragItemSupplier: (() => UIStatement | undefined) | undefined;
 let targetGroup: string | undefined;
 const groupDropAreas: Map<string, HTMLElement[]> = new Map();
 let dragOverAreaId: number | undefined;
 let idCounter: number = 0;
 
-function addStmtDrag(element: HTMLElement, supplier: () => UIStatement, group: string): void {
+function addStmtDrag(element: HTMLElement, supplier: () => UIStatement | undefined, group: string): void {
     element.draggable = true;
     element.ondragstart = () => {
-        draggedStmt = supplier();
+        if (dragItemSupplier !== undefined) {
+            return;
+        }
+
+        dragItemSupplier = supplier;
         targetGroup = group;
         for (const areas of (groupDropAreas.get(group) ?? [])) {
             areas.classList.add("drag-highlight");
         }
     };
     element.ondragend = () => {
-        draggedStmt = undefined;
+        dragItemSupplier = undefined;
         targetGroup = undefined;
         for (const areas of (groupDropAreas.get(group) ?? [])) {
             areas.classList.remove("drag-highlight");
@@ -194,14 +198,17 @@ function addStmtDrop(element: HTMLElement, group: string, target: ((stmt: UIStat
     }
 
     element.ondrop = () => {
-        if (!draggedStmt || !target || group !== targetGroup) {
+        if (!dragItemSupplier || !target || group !== targetGroup) {
             return;
         }
         if (id !== dragOverAreaId) {
             return;
         }
         dragOverAreaId = undefined;
-        target(draggedStmt);
+        const dragItem = dragItemSupplier();
+        if (dragItem) {
+            target(dragItem);
+        }
     };
 
     const dragAreaGroup = groupDropAreas.get(group) ?? [];
@@ -338,11 +345,24 @@ function createVSInput(ast: ReactiveAST) {
 function renderProgram(element: Element, ast: ReactiveAST): void {
     element.innerHTML = "";
     for (const stmt of ast.ast) {
-        element.appendChild(renderStmt(stmt, ast));
+        element.appendChild(renderTopLevelStmt(stmt, ast));
     }
 }
 
-function renderStmt(stmt: UIStatement, ast: ReactiveAST): Element {
+function renderTopLevelStmt(stmt: UIStatement, ast: ReactiveAST): Element {
+    const element = renderStmt(stmt, ast);
+    addStmtDrag(element, () => stmt, "control");
+    return element;
+}
+
+
+function renderInnerLevelStmt(stmt: UIStatement, remover: () => void, ast: ReactiveAST): Element {
+    const element = renderStmt(stmt, ast);
+    addStmtDrag(element, () => { remover(); return undefined; }, "control");
+    return element;
+}
+
+function renderStmt(stmt: UIStatement, ast: ReactiveAST): HTMLElement {
     const element = createBase();
     element.setAttribute("style", element.getAttribute("style")! + "display: flex; align-items: center; gap: 5px;");
 
@@ -355,8 +375,6 @@ function renderStmt(stmt: UIStatement, ast: ReactiveAST): Element {
     } else if (stmt instanceof IfStatement) {
         addIfStmt(element, stmt, ast);
     }
-
-    addStmtDrag(element, () => stmt, "control");
 
     return element;
 }
@@ -405,7 +423,16 @@ function addIfStmt(element: HTMLElement, stmt: IfStatement, ast: ReactiveAST): v
     `);
 
     if (stmt.condition) {
-        conditionArea.appendChild(renderStmt(stmt.condition, ast));
+        conditionArea.appendChild(
+            renderInnerLevelStmt(
+                stmt.condition,
+                () => {
+                    stmt.condition = undefined;
+                    ast.notify();
+                },
+                ast
+            )
+        );
     }
     addStmtDrop(conditionArea, "program", (condition) => {
         stmt.condition = condition;
@@ -421,7 +448,17 @@ function addIfStmt(element: HTMLElement, stmt: IfStatement, ast: ReactiveAST): v
     display: flex; 
     flex-direction: column; 
     gap: 5px;`);
-    stmt.body.forEach(s => body.appendChild(renderStmt(s, ast)));
+    stmt.body.forEach(s => body.appendChild(
+        renderInnerLevelStmt(
+            s,
+            () => {
+                stmt.body.splice(stmt.body.indexOf(s), 1);
+                ast.notify();
+            },
+            ast
+        )
+    )
+    );
     addStmtDrop(body, "program", (bodyStmt) => {
         stmt.body.push(bodyStmt);
         ast.notify();

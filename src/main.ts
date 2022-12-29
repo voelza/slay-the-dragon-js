@@ -33,8 +33,8 @@ playBtn.addEventListener("click", () => {
     const state = game!.play(code);
     if (state === GameState.WON) {
       currentLevel++;
-      initGame();
       resetter();
+      initGame();
     } else {
       game!.init();
     }
