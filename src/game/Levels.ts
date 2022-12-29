@@ -59,7 +59,8 @@ export const levels: LevelDefinition[] = [
         ],
         knight: { position: { row: 2, column: 0 } },
         dragon: { position: { row: 0, column: 7 }, hp: 1 },
-        actions: 9
+        actions: 9,
+        exludedStatements: [StatementExlude.IS_NEXT_TO, StatementExlude.IF, StatementExlude.WHILE, StatementExlude.NOT],
     },
     {
         level: [

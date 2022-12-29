@@ -304,7 +304,21 @@ function createControls(levelDef: LevelDefinition, ast: AST): Element {
         flex-wrap: wrap;
         gap: 5px;
         padding: 15px;
+        margin-left: -60px;
     `);
+
+    const trash = document.createElement("button");
+    trash.setAttribute("style", `
+        position: relative;
+        top: -50px;
+        left: 50px;
+        padding: 10px;
+    `);
+    trash.setAttribute("title", "Click to delete your whole program.");
+    trash.textContent = "🗑️";
+    trash.onclick = () => ast.reset();
+    addStmtDrop(trash, "control", ast.remove.bind(ast));
+    controls.appendChild(trash);
 
     const stmtExludes = levelDef.exludedStatements ?? [];
     isNotExluded(stmtExludes, StatementExlude.MOVE, () => controls.appendChild(createControlItem(MoveStatement.prototype, levelDef, (char, dir) => new MoveStatement(char, dir))));
@@ -317,7 +331,6 @@ function createControls(levelDef: LevelDefinition, ast: AST): Element {
     isNotExluded(stmtExludes, StatementExlude.WHILE, () => controls.appendChild(createControlFlowItem(WhileStatement.prototype, () => new WhileStatement())));
     isNotExluded(stmtExludes, StatementExlude.NOT, () => controls.appendChild(createControlFlowItem(NotStatement.prototype, () => new NotStatement())));
 
-    addStmtDrop(controls, "control", ast.remove.bind(ast));
     return controls;
 }
 
