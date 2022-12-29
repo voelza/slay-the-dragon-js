@@ -4,14 +4,9 @@ import './style.css';
 import { LevelDefinition, levels } from './game/Levels';
 import { createEditor } from './visualeditor/Editor';
 
-const [codeGetter, resetter] = createEditor(document.getElementById("visualInput")!, initActionCounter);
-
 const levelLabel = document.getElementById("levelLabel")!;
-
 const actionCounter = document.getElementById("actionCounter")!;
-function initActionCounter() {
-  actionCounter.textContent = `${determineActionCount(codeGetter())}/${currentDef!.actions} Actions`
-}
+const playBtn = document.getElementById("playBtn")!;
 
 let currentLevel = 0;
 let currentDef: LevelDefinition | undefined;
@@ -20,29 +15,34 @@ function initGame() {
   currentDef = levels[currentLevel];
   game = new Game(currentDef);
   levelLabel.textContent = `Level #${currentLevel + 1}`;
-  initActionCounter();
+  const updateActionsLabel = () => actionCounter.textContent = `${determineActionCount(codeGetter())}/${currentDef!.actions} Actions`;
+  const [codeGetter, resetter] = createEditor(
+    document.getElementById("visualInput")!,
+    currentDef,
+    updateActionsLabel
+  );
+  updateActionsLabel();
+
+  playBtn.onclick = () => {
+    const code = codeGetter();
+    console.log(code);
+    try {
+      const state = game!.play(code);
+      if (state === GameState.WON) {
+        currentLevel++;
+        resetter();
+        initGame();
+      } else {
+        game!.init();
+      }
+    } catch (e) {
+      alert(e);
+      game!.init();
+    }
+  };
 }
 initGame();
 render(document.getElementById("level")!);
-
-const playBtn = document.getElementById("playBtn")! as HTMLButtonElement;
-playBtn.addEventListener("click", () => {
-  const code = codeGetter();
-  console.log(code);
-  try {
-    const state = game!.play(code);
-    if (state === GameState.WON) {
-      currentLevel++;
-      resetter();
-      initGame();
-    } else {
-      game!.init();
-    }
-  } catch (e) {
-    alert(e);
-    game!.init();
-  }
-});
 
 const helpBtn = document.getElementById("helpBtn")!;
 helpBtn.addEventListener("click", () => {

@@ -1,4 +1,5 @@
 import knightIcon from "../game/knight.svg";
+import { LevelDefinition } from "../game/Levels";
 import mageIcon from "../game/mage.svg";
 
 type Character = "knight" | "mage";
@@ -247,7 +248,9 @@ function addStmtDrop(element: HTMLElement, group: string, target: ((stmt: UIStat
     groupDropAreas.set(group, dragAreaGroup);
 }
 
-export function createEditor(element: Element, stateObserver: () => void): [CodeGetter, Resetter] {
+export function createEditor(element: Element, levelDef: LevelDefinition, stateObserver: () => void): [CodeGetter, Resetter] {
+    element.innerHTML = "";
+
     const ast = new AST();
 
     const vsEditor = document.createElement("div");
@@ -260,7 +263,7 @@ export function createEditor(element: Element, stateObserver: () => void): [Code
     const controls = createControls(ast);
     vsEditor.appendChild(controls);
 
-    const tabs = createTabs(ast);
+    const tabs = createTabs(levelDef, ast);
     vsEditor.appendChild(tabs);
 
     const vsInput = createVSInput(ast);
@@ -547,12 +550,14 @@ function createBase(): HTMLElement {
 }
 
 let activeTab: Element | undefined;
-function createTabs(ast: AST): Element {
+function createTabs(levelDef: LevelDefinition, ast: AST): Element {
     const tabs = document.createElement("div");
     tabs.classList.add("tabs");
 
     tabs.appendChild(createTab(ast, "main", true));
-    tabs.appendChild(createTab(ast, "knight"));
+    for (const extend of levelDef.extends ?? []) {
+        tabs.appendChild(createTab(ast, extend));
+    }
     return tabs;
 }
 
