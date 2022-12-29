@@ -306,15 +306,47 @@ export class Game {
         });
     }
 
-    queueLevelRender(attackPosition: Position | undefined = undefined, isNextToPosition: Position | undefined = undefined) {
+
+    queueLevelRender() {
+        queueRender({
+            type: RenderType.LEVEL,
+            level: this.level,
+            knight: { position: this.knight!.position, attack: this.knight!.attack },
+            dragon: { position: this.dragon!.position, hp: this.dragon!.hp },
+            mage: this.mage ? { position: this.mage?.position, attack: this.mage!.attack } : undefined
+        });
+    }
+
+    queueAttackLevelRender(attackPosition: Position) {
         queueRender({
             type: RenderType.LEVEL,
             level: this.level,
             knight: { position: this.knight!.position, attack: this.knight!.attack },
             dragon: { position: this.dragon!.position, hp: this.dragon!.hp },
             mage: this.mage ? { position: this.mage?.position, attack: this.mage!.attack } : undefined,
-            attackPosition,
+            attackPosition
+        });
+    }
+
+    queueIsNextToLevelRender(isNextToPosition: Position) {
+        queueRender({
+            type: RenderType.LEVEL,
+            level: this.level,
+            knight: { position: this.knight!.position, attack: this.knight!.attack },
+            dragon: { position: this.dragon!.position, hp: this.dragon!.hp },
+            mage: this.mage ? { position: this.mage?.position, attack: this.mage!.attack } : undefined,
             isNextToPosition
+        });
+    }
+
+    queueSupportLevelRender(supportPosition: Position) {
+        queueRender({
+            type: RenderType.LEVEL,
+            level: this.level,
+            knight: { position: this.knight!.position, attack: this.knight!.attack },
+            dragon: { position: this.dragon!.position, hp: this.dragon!.hp },
+            mage: this.mage ? { position: this.mage?.position, attack: this.mage!.attack } : undefined,
+            supportPosition
         });
     }
 
@@ -382,12 +414,12 @@ export class Game {
             this.dragon!.takeDamage(character.attack);
         }
         character.attack -= character.attack;
-        this.queueLevelRender(attackPosition);
+        this.queueAttackLevelRender(attackPosition);
     }
 
     isNextTo(character: Character, direction: Direction, target: Interactable): boolean {
         const isNextToPosition = character.nextPosition(direction);
-        this.queueLevelRender(undefined, isNextToPosition);
+        this.queueIsNextToLevelRender(isNextToPosition);
         if (Interactable.DRAGON === target) {
             return this.dragon!.isOnPosition(isNextToPosition);
         }
@@ -395,7 +427,9 @@ export class Game {
     }
 
     support(mage: Mage, direction: Direction) {
-        if (this.knight!.isOnPosition(mage.nextPosition(direction))) {
+        const supportPosition = mage.nextPosition(direction);
+        this.queueSupportLevelRender(supportPosition);
+        if (this.knight!.isOnPosition(supportPosition)) {
             this.knight.attack += mage.attack;
             mage.attack -= mage.attack;
         }

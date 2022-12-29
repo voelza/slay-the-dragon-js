@@ -71,7 +71,6 @@ class SupportStatement implements UIStatement {
     icon(): string {
         return "✨";
     }
-
 }
 
 class IsNextToStatement implements UIStatement {

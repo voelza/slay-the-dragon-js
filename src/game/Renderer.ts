@@ -26,7 +26,8 @@ export type LevelRender = {
     dragon: DragonRender,
     mage?: ChracterRender,
     attackPosition?: Position,
-    isNextToPosition?: Position
+    isNextToPosition?: Position,
+    supportPosition?: Position
 }
 
 export type DialogRender = {
@@ -61,7 +62,7 @@ function isOnTile(row: number, column: number, position: Position): boolean {
 }
 
 function renderLevel(element: Element, entry: LevelRender): void {
-    const { level, knight, dragon, mage, attackPosition, isNextToPosition } = entry;
+    const { level, knight, dragon, mage, attackPosition, isNextToPosition, supportPosition } = entry;
     element.innerHTML = "";
     for (let row = 0; row < level.tiles.length; row++) {
         const rowEle = document.createElement("div");
@@ -75,6 +76,10 @@ function renderLevel(element: Element, entry: LevelRender): void {
 
             if (isNextToPosition && isOnTile(row, column, isNextToPosition)) {
                 addIsNextTo(tile);
+            }
+
+            if (supportPosition && isOnTile(row, column, supportPosition)) {
+                addSupportPosition(tile);
             }
 
             if (!Array.isArray(dragon.position) && isOnTile(row, column, dragon!.position)) {
@@ -195,6 +200,21 @@ function addAttack(tile: Element) {
 function addIsNextTo(tile: Element) {
     const ele = document.createElement("div");
     ele.textContent = "🔍";
+    ele.setAttribute("style", `
+        position: absolute;
+        width: 5px;
+        height: 25px;
+        margin-top: 5px;
+        opacity: 0;
+        animation-name: blink;
+        animation-duration: 1s;
+    `);
+    tile.appendChild(ele);
+}
+
+function addSupportPosition(tile: Element) {
+    const ele = document.createElement("div");
+    ele.textContent = "✨";
     ele.setAttribute("style", `
         position: absolute;
         width: 5px;
