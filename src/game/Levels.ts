@@ -53,6 +53,31 @@ export const levels: LevelDefinition[] = [
     },
     {
         level: [
+            [Tile.HOLE, Tile.ROAD, Tile.ROAD],
+            [Tile.HOLE, Tile.ROAD, Tile.HOLE],
+            [Tile.HOLE, Tile.ROAD, Tile.HOLE],
+            [Tile.ROAD, Tile.ROAD, Tile.HOLE],
+        ],
+        knight: { position: { row: 0, column: 2 } },
+        dragon: { position: { row: 3, column: 0 }, hp: 1 },
+        actions: 5,
+        exludedStatements: [StatementExlude.IS_NEXT_TO, StatementExlude.IF, StatementExlude.WHILE, StatementExlude.NOT],
+    },
+    {
+        level: [
+            [Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL],
+            [Tile.WALL, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.WALL],
+            [Tile.WALL, Tile.ROAD, Tile.HOLE, Tile.HOLE, Tile.WALL],
+            [Tile.WALL, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.WALL],
+            [Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL],
+        ],
+        knight: { position: { row: 1, column: 3 } },
+        dragon: { position: { row: 3, column: 3 }, hp: 1 },
+        actions: 6,
+        exludedStatements: [StatementExlude.IS_NEXT_TO, StatementExlude.IF, StatementExlude.WHILE, StatementExlude.NOT],
+    },
+    {
+        level: [
             [Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD],
             [Tile.HOLE, Tile.HOLE, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE, Tile.HOLE, Tile.HOLE],
             [Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE]
