@@ -40,6 +40,26 @@ function initGame() {
       game!.init();
     }
   };
+
+  document.onkeydown = e => {
+    let nextLevel = currentLevel;
+    if (e.key === "ArrowRight") {
+      nextLevel++;
+      if (nextLevel > levels.length - 1) {
+        nextLevel = levels.length - 1;
+      }
+    } else if (e.key === "ArrowLeft") {
+      nextLevel--;
+      if (nextLevel < 0) {
+        nextLevel = 0;
+      }
+    }
+
+    currentLevel = nextLevel;
+
+    resetter();
+    initGame();
+  };
 }
 initGame();
 render(document.getElementById("level")!);
@@ -64,3 +84,4 @@ helpBtn.addEventListener("click", () => {
 
   dialog.addEventListener('close', () => dialog.remove());
 });
+
