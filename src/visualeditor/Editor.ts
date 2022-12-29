@@ -1,5 +1,5 @@
 import knightIcon from "../game/knight.svg";
-import { LevelDefinition } from "../game/Levels";
+import { LevelDefinition, StatementExlude } from "../game/Levels";
 import mageIcon from "../game/mage.svg";
 
 type Character = "knight" | "mage";
@@ -307,18 +307,25 @@ function createControls(levelDef: LevelDefinition, ast: AST): Element {
         padding: 15px;
     `);
 
-    controls.appendChild(createControlItem(MoveStatement.prototype, levelDef, (char, dir) => new MoveStatement(char, dir)));
-    controls.appendChild(createControlItem(AttackStatement.prototype, levelDef, (char, dir) => new AttackStatement(char, dir)));
+    const stmtExludes = levelDef.exludedStatements ?? [];
+    isNotExluded(stmtExludes, StatementExlude.MOVE, () => controls.appendChild(createControlItem(MoveStatement.prototype, levelDef, (char, dir) => new MoveStatement(char, dir))));
+    isNotExluded(stmtExludes, StatementExlude.ATTACK, () => controls.appendChild(createControlItem(AttackStatement.prototype, levelDef, (char, dir) => new AttackStatement(char, dir))));
     if (levelDef.mage) {
-        controls.appendChild(createControlItem(SupportStatement.prototype, levelDef, (char, dir) => new SupportStatement(char, dir)));
+        isNotExluded(stmtExludes, StatementExlude.SUPPORT, () => controls.appendChild(createControlItem(SupportStatement.prototype, levelDef, (char, dir) => new SupportStatement(char, dir))));
     }
-    controls.appendChild(createControlItem(IsNextToStatement.prototype, levelDef, (char, dir, inter) => new IsNextToStatement(char, dir, inter!), true));
-    controls.appendChild(createControlFlowItem(IfStatement.prototype, () => new IfStatement()));
-    controls.appendChild(createControlFlowItem(WhileStatement.prototype, () => new WhileStatement()));
-    controls.appendChild(createControlFlowItem(NotStatement.prototype, () => new NotStatement()));
+    isNotExluded(stmtExludes, StatementExlude.IS_NEXT_TO, () => controls.appendChild(createControlItem(IsNextToStatement.prototype, levelDef, (char, dir, inter) => new IsNextToStatement(char, dir, inter!), true)));
+    isNotExluded(stmtExludes, StatementExlude.IF, () => controls.appendChild(createControlFlowItem(IfStatement.prototype, () => new IfStatement())));
+    isNotExluded(stmtExludes, StatementExlude.WHILE, () => controls.appendChild(createControlFlowItem(WhileStatement.prototype, () => new WhileStatement())));
+    isNotExluded(stmtExludes, StatementExlude.NOT, () => controls.appendChild(createControlFlowItem(NotStatement.prototype, () => new NotStatement())));
 
     addStmtDrop(controls, "control", ast.remove.bind(ast));
     return controls;
+}
+
+function isNotExluded(excludes: StatementExlude[], expected: StatementExlude, callback: () => void) {
+    if (!excludes.includes(expected)) {
+        callback();
+    }
 }
 
 function createControlFlowItem(label: UIStatement, supplier: () => UIStatement): Element {

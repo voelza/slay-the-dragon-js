@@ -10,12 +10,22 @@ export type DragonDefinition = {
     hp: number
 }
 
+export enum StatementExlude {
+    MOVE,
+    ATTACK,
+    SUPPORT,
+    IS_NEXT_TO,
+    IF,
+    WHILE,
+    NOT
+}
 export type LevelDefinition = {
     level: Tile[][];
     knight: CharacterDefinition;
     dragon: DragonDefinition;
     mage?: CharacterDefinition;
     actions: number;
+    exludedStatements?: StatementExlude[];
     extends?: string[],
     solution?: string;
     help?: string,
@@ -29,6 +39,7 @@ export const levels: LevelDefinition[] = [
         knight: { position: { row: 0, column: 0 } },
         dragon: { position: { row: 0, column: 2 }, hp: 1 },
         actions: 2,
+        exludedStatements: [StatementExlude.IS_NEXT_TO, StatementExlude.IF, StatementExlude.WHILE, StatementExlude.NOT],
         help: `
         To attack the dragon you have to move your knight next to it and swing
         your sword in it's direction like this: "knight.attack(<DIRECTION>);".
