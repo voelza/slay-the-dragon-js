@@ -104,16 +104,17 @@ class IfStatement implements UIStatement {
 }
 
 class WhileStatement implements UIStatement {
-    condition: NotStatement | IsNextToStatement;
+    condition: UIStatement | undefined;
     body: UIStatement[];
 
-    constructor(condition: NotStatement | IsNextToStatement, body: UIStatement[]) {
+    constructor(condition: NotStatement | IsNextToStatement | undefined = undefined, body: UIStatement[] = []) {
         this.condition = condition;
         this.body = body;
     }
     toCode(): string {
-        throw new Error("Method not implemented.");
+        return `while(${this.condition?.toCode().replaceAll(";", "")}){${this.body.map(s => s.toCode()).join("")}}`
     }
+
     icon(): string {
         return "♾️";
     }
@@ -183,6 +184,7 @@ function addStmtDrag(element: HTMLElement, supplier: () => UIStatement | undefin
         }
     }
 }
+
 function addStmtDrop(element: HTMLElement, group: string, target: ((stmt: UIStatement) => void) | undefined = undefined): void {
     const id = ++idCounter;
     element.ondragover = (e) => {
@@ -255,9 +257,9 @@ function createControls(ast: ReactiveAST): Element {
     controls.appendChild(createControlItemWithOverlay("🤺", (dir) => new AttackStatement("knight", dir)));
     controls.appendChild(createControlItemWithOverlay("🔍", (dir, inter) => new IsNextToStatement("knight", dir, inter!), true));
     controls.appendChild(createControlFlowItem("IF", () => new IfStatement()));
+    controls.appendChild(createControlFlowItem("♾️", () => new WhileStatement()));
 
     addStmtDrop(controls, "control", ast.remove.bind(ast));
-
     return controls;
 }
 
@@ -355,7 +357,6 @@ function renderTopLevelStmt(stmt: UIStatement, ast: ReactiveAST): Element {
     return element;
 }
 
-
 function renderInnerLevelStmt(stmt: UIStatement, remover: () => void, ast: ReactiveAST): Element {
     const element = renderStmt(stmt, ast);
     addStmtDrag(element, () => { remover(); return undefined; }, "control");
@@ -373,7 +374,9 @@ function renderStmt(stmt: UIStatement, ast: ReactiveAST): HTMLElement {
     } else if (stmt instanceof IsNextToStatement) {
         addIsNextToStmt(element, stmt);
     } else if (stmt instanceof IfStatement) {
-        addIfStmt(element, stmt, ast);
+        addControlFlowStmt(element, stmt, ast);
+    } else if (stmt instanceof WhileStatement) {
+        addControlFlowStmt(element, stmt, ast);
     }
 
     return element;
@@ -391,9 +394,9 @@ function addIsNextToStmt(element: HTMLElement, stmt: IsNextToStatement): void {
     element.appendChild(createMethod(`: ${stmt.icon()}${DIRECTION_ICONS.get(direction)}${INTERACTABLE_ICONS.get(interactable)}`));
 }
 
-function addIfStmt(element: HTMLElement, stmt: IfStatement, ast: ReactiveAST): void {
-    const ifElement = createBase();
-    ifElement.setAttribute("style", ifElement.getAttribute("style") + `
+function addControlFlowStmt(element: HTMLElement, stmt: IfStatement | WhileStatement, ast: ReactiveAST): void {
+    const controlFlowStmt = createBase();
+    controlFlowStmt.setAttribute("style", controlFlowStmt.getAttribute("style") + `
     display: flex; 
     flex-direction: column; 
     gap: 5px;
@@ -409,9 +412,9 @@ function addIfStmt(element: HTMLElement, stmt: IfStatement, ast: ReactiveAST): v
     width: 100%;
     `);
 
-    const ifIcon = document.createElement("span");
-    ifIcon.textContent = "IF";
-    conditionContainer.appendChild(ifIcon);
+    const icon = document.createElement("span");
+    icon.textContent = stmt.icon();
+    conditionContainer.appendChild(icon);
 
     const conditionArea = document.createElement("div");
     conditionArea.setAttribute("style", `
@@ -466,9 +469,9 @@ function addIfStmt(element: HTMLElement, stmt: IfStatement, ast: ReactiveAST): v
 
 
     conditionContainer.appendChild(conditionArea);
-    ifElement.appendChild(conditionContainer);
-    ifElement.appendChild(body);
-    element.appendChild(ifElement);
+    controlFlowStmt.appendChild(conditionContainer);
+    controlFlowStmt.appendChild(body);
+    element.appendChild(controlFlowStmt);
 }
 
 
