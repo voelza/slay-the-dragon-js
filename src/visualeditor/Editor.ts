@@ -88,15 +88,15 @@ class NotStatement implements UIStatement {
 }
 
 class IfStatement implements UIStatement {
-    condition: NotStatement | IsNextToStatement;
+    condition: UIStatement | undefined;
     body: UIStatement[];
 
-    constructor(condition: NotStatement | IsNextToStatement, body: UIStatement[]) {
+    constructor(condition: NotStatement | IsNextToStatement | undefined = undefined, body: UIStatement[] = []) {
         this.condition = condition;
         this.body = body;
     }
     toCode(): string {
-        throw new Error("Method not implemented.");
+        return `if(${this.condition?.toCode().replaceAll(";", "")}){${this.body.map(s => s.toCode()).join("")}}`;
     }
     icon(): string {
         return "IF";
@@ -124,37 +124,43 @@ export type CodeGetter = () => string;
 export type Resetter = () => void;
 type AstObserver = () => void;
 
-function reactiveAST(): [
-    () => UIStatement[],
-    (stmt: UIStatement) => void,
-    (stmt: UIStatement) => void,
-    (observer: AstObserver) => void,
-    Resetter
-] {
-    let ast: UIStatement[] = [];
-    const observers: AstObserver[] = [];
-    return [
-        () => ast,
-        (stmt: UIStatement) => {
-            ast.push(stmt);
-            observers.forEach(o => o());
-        },
-        (stmt: UIStatement) => {
-            ast.splice(ast.indexOf(stmt), 1);
-            observers.forEach(o => o());
-        },
-        (observer: AstObserver) => observers.push(observer),
-        () => {
-            ast = [];
-            observers.forEach(o => o());
-        }
-    ];
-}
+class ReactiveAST {
+    ast: UIStatement[];
+    observers: AstObserver[];
+    constructor() {
+        this.ast = [];
+        this.observers = [];
+    }
 
+    push(stmt: UIStatement) {
+        this.ast.push(stmt);
+        this.notify();
+    }
+
+    remove(stmt: UIStatement) {
+        this.ast.splice(this.ast.indexOf(stmt), 1);
+        this.notify();
+    }
+
+    reset() {
+        this.ast = [];
+        this.notify();
+    }
+
+    addObserver(observer: AstObserver) {
+        this.observers.push(observer);
+    }
+
+    notify() {
+        this.observers.forEach(o => o());
+    }
+}
 
 let draggedStmt: UIStatement | undefined;
 let targetGroup: string | undefined;
 const groupDropAreas: Map<string, HTMLElement[]> = new Map();
+let dragOverAreaId: number | undefined;
+let idCounter: number = 0;
 
 function addStmtDrag(element: HTMLElement, supplier: () => UIStatement, group: string): void {
     element.draggable = true;
@@ -162,23 +168,39 @@ function addStmtDrag(element: HTMLElement, supplier: () => UIStatement, group: s
         draggedStmt = supplier();
         targetGroup = group;
         for (const areas of (groupDropAreas.get(group) ?? [])) {
-            areas.classList.toggle("drag-highlight");
+            areas.classList.add("drag-highlight");
         }
     };
     element.ondragend = () => {
         draggedStmt = undefined;
         targetGroup = undefined;
         for (const areas of (groupDropAreas.get(group) ?? [])) {
-            areas.classList.toggle("drag-highlight");
+            areas.classList.remove("drag-highlight");
         }
     }
 }
 function addStmtDrop(element: HTMLElement, group: string, target: ((stmt: UIStatement) => void) | undefined = undefined): void {
-    element.ondragover = (e) => e.preventDefault();
+    const id = ++idCounter;
+    element.ondragover = (e) => {
+        e.preventDefault();
+        if (dragOverAreaId === undefined) {
+            dragOverAreaId = id;
+        }
+    };
+    element.ondragleave = () => {
+        if (dragOverAreaId === id) {
+            dragOverAreaId = undefined;
+        }
+    }
+
     element.ondrop = () => {
         if (!draggedStmt || !target || group !== targetGroup) {
             return;
         }
+        if (id !== dragOverAreaId) {
+            return;
+        }
+        dragOverAreaId = undefined;
         target(draggedStmt);
     };
 
@@ -187,9 +209,8 @@ function addStmtDrop(element: HTMLElement, group: string, target: ((stmt: UIStat
     groupDropAreas.set(group, dragAreaGroup);
 }
 
-
 export function createEditor(element: Element): [CodeGetter, Resetter] {
-    const [program, pushStmt, removeStmt, addObserver, resetter] = reactiveAST();
+    const ast = new ReactiveAST();
 
     const vsEditor = document.createElement("div");
     vsEditor.setAttribute("style", `
@@ -198,23 +219,22 @@ export function createEditor(element: Element): [CodeGetter, Resetter] {
         width: 100%;
     `);
 
-    const controls = createControls(removeStmt);
+    const controls = createControls(ast);
     vsEditor.appendChild(controls);
 
-    const vsInput = createVSInput(pushStmt);
+    const vsInput = createVSInput(ast);
     vsEditor.appendChild(vsInput);
 
-    element.appendChild(vsEditor)
+    element.appendChild(vsEditor);
 
-
-    addObserver(() => renderProgram(vsInput, program()));
+    ast.addObserver(() => renderProgram(vsInput, ast));
     return [
-        () => program().map(stmt => stmt.toCode()).join("\n"),
-        resetter
+        () => ast.ast.map(stmt => stmt.toCode()).join("\n"),
+        () => ast.reset()
     ];
 }
 
-function createControls(removeStmt: (stmt: UIStatement) => void): Element {
+function createControls(ast: ReactiveAST): Element {
     const controls = document.createElement("div");
     controls.setAttribute("style", `
         display: flex;
@@ -224,16 +244,24 @@ function createControls(removeStmt: (stmt: UIStatement) => void): Element {
         margin: 10px;
     `);
 
-    controls.appendChild(createControlItem("🏃‍♂️", (dir, _) => new MoveStatement("knight", dir)));
-    controls.appendChild(createControlItem("🤺", (dir, _) => new AttackStatement("knight", dir)));
-    controls.appendChild(createControlItem("🔍", (dir, inter) => new IsNextToStatement("knight", dir, inter!), true));
+    controls.appendChild(createControlItemWithOverlay("🏃‍♂️", (dir) => new MoveStatement("knight", dir)));
+    controls.appendChild(createControlItemWithOverlay("🤺", (dir) => new AttackStatement("knight", dir)));
+    controls.appendChild(createControlItemWithOverlay("🔍", (dir, inter) => new IsNextToStatement("knight", dir, inter!), true));
+    controls.appendChild(createControlFlowItem("IF", () => new IfStatement()));
 
-    addStmtDrop(controls, "control", removeStmt);
+    addStmtDrop(controls, "control", ast.remove.bind(ast));
 
     return controls;
 }
 
-function createControlItem(label: string, supplier: (direction: Direction, interactable: Interactable | undefined) => UIStatement, withInter: boolean = false): Element {
+function createControlFlowItem(label: string, supplier: () => UIStatement): Element {
+    const item = createBase();
+    item.textContent = label;
+    addStmtDrag(item, () => supplier(), "program");
+    return item;
+}
+
+function createControlItemWithOverlay(label: string, supplier: (direction: Direction, interactable: Interactable | undefined) => UIStatement, withInter: boolean = false): Element {
     const item = createBase();
     let currentDirection: Direction = ALL_DIRECTIONS[0];
     let currentInteractable: Interactable | undefined = withInter ? ALL_INTERACTABLES[0] : undefined;
@@ -290,7 +318,7 @@ function createControlItem(label: string, supplier: (direction: Direction, inter
     return item;
 }
 
-function createVSInput(pushStmt: (stmt: UIStatement) => void) {
+function createVSInput(ast: ReactiveAST) {
     const vsInput = document.createElement("div");
     vsInput.setAttribute("style", `
         background-color: #3b3b3b;
@@ -303,19 +331,18 @@ function createVSInput(pushStmt: (stmt: UIStatement) => void) {
         box-sizing: border-box;
     `);
 
-    addStmtDrop(vsInput, "program", pushStmt);
+    addStmtDrop(vsInput, "program", ast.push.bind(ast));
     return vsInput;
 }
 
-function renderProgram(element: Element, program: UIStatement[]): void {
-    console.log(program);
+function renderProgram(element: Element, ast: ReactiveAST): void {
     element.innerHTML = "";
-    for (const stmt of program) {
-        element.appendChild(renderStmt(stmt));
+    for (const stmt of ast.ast) {
+        element.appendChild(renderStmt(stmt, ast));
     }
 }
 
-function renderStmt(stmt: UIStatement): Element {
+function renderStmt(stmt: UIStatement, ast: ReactiveAST): Element {
     const element = createBase();
     element.setAttribute("style", element.getAttribute("style")! + "display: flex; align-items: center; gap: 5px;");
 
@@ -325,6 +352,8 @@ function renderStmt(stmt: UIStatement): Element {
         addDirectionStmt(element, stmt);
     } else if (stmt instanceof IsNextToStatement) {
         addIsNextToStmt(element, stmt);
+    } else if (stmt instanceof IfStatement) {
+        addIfStmt(element, stmt, ast);
     }
 
     addStmtDrag(element, () => stmt, "control");
@@ -343,6 +372,68 @@ function addIsNextToStmt(element: HTMLElement, stmt: IsNextToStatement): void {
     element.appendChild(createCharacterIcon(character));
     element.appendChild(createMethod(`: ${stmt.icon()}${DIRECTION_ICONS.get(direction)}${INTERACTABLE_ICONS.get(interactable)}`));
 }
+
+function addIfStmt(element: HTMLElement, stmt: IfStatement, ast: ReactiveAST): void {
+    const ifElement = createBase();
+    ifElement.setAttribute("style", ifElement.getAttribute("style") + `
+    display: flex; 
+    flex-direction: column; 
+    gap: 5px;
+    width: 100%;
+    padding: 0;
+    `);
+
+    const conditionContainer = document.createElement("div");
+    conditionContainer.setAttribute("style", `
+    display: flex; 
+    align-items: center; 
+    gap: 15px;
+    width: 100%;
+    `);
+
+    const ifIcon = document.createElement("span");
+    ifIcon.textContent = "IF";
+    conditionContainer.appendChild(ifIcon);
+
+    const conditionArea = document.createElement("div");
+    conditionArea.setAttribute("style", `
+    padding: 5px; 
+    min-height: 50px; 
+    background-color: rgba(255, 255, 255, .1); 
+    border-radius: 5px;
+    width: 100%;
+    `);
+
+    if (stmt.condition) {
+        conditionArea.appendChild(renderStmt(stmt.condition, ast));
+    }
+    addStmtDrop(conditionArea, "program", (condition) => {
+        stmt.condition = condition;
+        ast.notify();
+    });
+
+    const body = document.createElement("div");
+    body.setAttribute("style", `
+    padding: 5px; 
+    min-height: 50px; 
+    background-color: rgba(255, 255, 255, .1); 
+    border-radius: 5px; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 5px;`);
+    stmt.body.forEach(s => body.appendChild(renderStmt(s, ast)));
+    addStmtDrop(body, "program", (bodyStmt) => {
+        stmt.body.push(bodyStmt);
+        ast.notify();
+    });
+
+
+    conditionContainer.appendChild(conditionArea);
+    ifElement.appendChild(conditionContainer);
+    ifElement.appendChild(body);
+    element.appendChild(ifElement);
+}
+
 
 function createCharacterIcon(character: Character): Element {
     const charIcon = document.createElement("img");

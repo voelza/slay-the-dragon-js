@@ -142,6 +142,7 @@ render(document.getElementById("level")!);
 const playBtn = document.getElementById("playBtn")! as HTMLButtonElement;
 playBtn.addEventListener("click", () => {
   const code = codeGetter();
+  console.log(code);
   try {
     const state = game!.play(code);
     if (state === GameState.WON) {
