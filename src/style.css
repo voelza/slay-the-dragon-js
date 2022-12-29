@@ -185,5 +185,23 @@ dialog {
   100% {
     background-color: transparent;
   }
+}
 
+@keyframes blink {
+
+  25% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
+
+  85% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
 }

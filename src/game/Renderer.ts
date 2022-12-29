@@ -25,7 +25,8 @@ export type LevelRender = {
     knight: ChracterRender,
     dragon: DragonRender,
     mage?: ChracterRender,
-    attackPosition?: Position
+    attackPosition?: Position,
+    isNextToPosition?: Position
 }
 
 export type DialogRender = {
@@ -60,7 +61,7 @@ function isOnTile(row: number, column: number, position: Position): boolean {
 }
 
 function renderLevel(element: Element, entry: LevelRender): void {
-    const { level, knight, dragon, mage, attackPosition } = entry;
+    const { level, knight, dragon, mage, attackPosition, isNextToPosition } = entry;
     element.innerHTML = "";
     for (let row = 0; row < level.tiles.length; row++) {
         const rowEle = document.createElement("div");
@@ -70,6 +71,10 @@ function renderLevel(element: Element, entry: LevelRender): void {
 
             if (attackPosition && isOnTile(row, column, attackPosition)) {
                 addAttack(tile);
+            }
+
+            if (isNextToPosition && isOnTile(row, column, isNextToPosition)) {
+                addIsNextTo(tile);
             }
 
             if (!Array.isArray(dragon.position) && isOnTile(row, column, dragon!.position)) {
@@ -182,6 +187,21 @@ function addAttack(tile: Element) {
         margin-top: 5px;
         background-color: transparent;
         animation-name: swing;
+        animation-duration: 1s;
+    `);
+    tile.appendChild(ele);
+}
+
+function addIsNextTo(tile: Element) {
+    const ele = document.createElement("div");
+    ele.textContent = "🔍";
+    ele.setAttribute("style", `
+        position: absolute;
+        width: 5px;
+        height: 25px;
+        margin-top: 5px;
+        opacity: 0;
+        animation-name: blink;
         animation-duration: 1s;
     `);
     tile.appendChild(ele);
