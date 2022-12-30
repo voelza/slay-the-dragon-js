@@ -299,19 +299,16 @@ export function createEditor(element: Element, levelDef: LevelDefinition, stateO
 function createControls(levelDef: LevelDefinition, ast: AST): Element {
     const controls = document.createElement("div");
     controls.setAttribute("style", `
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
+        display:flex;
+        flex-direction: column;
         gap: 5px;
-        padding: 15px;
-        margin-left: -60px;
+        margin-top: -40px;
+        margin-bottom: 5px;
     `);
 
     const trash = document.createElement("button");
     trash.setAttribute("style", `
-        position: relative;
-        top: -50px;
-        left: 50px;
+        width: 55px;
         padding: 10px;
     `);
     trash.setAttribute("title", "Click to delete your whole program.");
@@ -320,17 +317,28 @@ function createControls(levelDef: LevelDefinition, ast: AST): Element {
     addStmtDrop(trash, "control", ast.remove.bind(ast));
     controls.appendChild(trash);
 
-    const stmtExludes = levelDef.exludedStatements ?? [];
-    isNotExluded(stmtExludes, StatementExlude.MOVE, () => controls.appendChild(createControlItem(MoveStatement.prototype, levelDef, (char, dir) => new MoveStatement(char, dir))));
-    isNotExluded(stmtExludes, StatementExlude.ATTACK, () => controls.appendChild(createControlItem(AttackStatement.prototype, levelDef, (char, dir) => new AttackStatement(char, dir))));
-    if (levelDef.mage) {
-        isNotExluded(stmtExludes, StatementExlude.SUPPORT, () => controls.appendChild(createControlItem(SupportStatement.prototype, levelDef, (char, dir) => new SupportStatement(char, dir))));
-    }
-    isNotExluded(stmtExludes, StatementExlude.IS_NEXT_TO, () => controls.appendChild(createControlItem(IsNextToStatement.prototype, levelDef, (char, dir, inter) => new IsNextToStatement(char, dir, inter!), true)));
-    isNotExluded(stmtExludes, StatementExlude.IF, () => controls.appendChild(createControlFlowItem(IfStatement.prototype, () => new IfStatement())));
-    isNotExluded(stmtExludes, StatementExlude.WHILE, () => controls.appendChild(createControlFlowItem(WhileStatement.prototype, () => new WhileStatement())));
-    isNotExluded(stmtExludes, StatementExlude.NOT, () => controls.appendChild(createControlFlowItem(NotStatement.prototype, () => new NotStatement())));
 
+    const controlsContainer = document.createElement("div");
+    controlsContainer.setAttribute("style", `
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 5px;
+    `);
+
+
+    const stmtExludes = levelDef.exludedStatements ?? [];
+    isNotExluded(stmtExludes, StatementExlude.MOVE, () => controlsContainer.appendChild(createControlItem(MoveStatement.prototype, levelDef, (char, dir) => new MoveStatement(char, dir))));
+    isNotExluded(stmtExludes, StatementExlude.ATTACK, () => controlsContainer.appendChild(createControlItem(AttackStatement.prototype, levelDef, (char, dir) => new AttackStatement(char, dir))));
+    if (levelDef.mage) {
+        isNotExluded(stmtExludes, StatementExlude.SUPPORT, () => controlsContainer.appendChild(createControlItem(SupportStatement.prototype, levelDef, (char, dir) => new SupportStatement(char, dir))));
+    }
+    isNotExluded(stmtExludes, StatementExlude.IS_NEXT_TO, () => controlsContainer.appendChild(createControlItem(IsNextToStatement.prototype, levelDef, (char, dir, inter) => new IsNextToStatement(char, dir, inter!), true)));
+    isNotExluded(stmtExludes, StatementExlude.IF, () => controlsContainer.appendChild(createControlFlowItem(IfStatement.prototype, () => new IfStatement())));
+    isNotExluded(stmtExludes, StatementExlude.WHILE, () => controlsContainer.appendChild(createControlFlowItem(WhileStatement.prototype, () => new WhileStatement())));
+    isNotExluded(stmtExludes, StatementExlude.NOT, () => controlsContainer.appendChild(createControlFlowItem(NotStatement.prototype, () => new NotStatement())));
+
+    controls.appendChild(controlsContainer);
     return controls;
 }
 
@@ -436,7 +444,7 @@ function createVSInput(ast: AST) {
     const vsInput = document.createElement("div");
     vsInput.setAttribute("style", `
         background-color: #3b3b3b;
-        height: 80%;
+        height: 78%;
         overflow: auto;
         display: flex;
         flex-direction: column;
