@@ -15,8 +15,8 @@ DIRECTION_ICONS.set("WEST", "⬅️");
 type Interactable = "dragon" | "ROAD" | "WALL" | "HOLE";
 const ALL_INTERACTABLES: Interactable[] = ["dragon", "ROAD", "WALL", "HOLE"];
 const INTERACTABLE_ICONS: Map<Interactable, string> = new Map();
-INTERACTABLE_ICONS.set("dragon", "🐲");
-INTERACTABLE_ICONS.set("ROAD", "🛣️");
+INTERACTABLE_ICONS.set("dragon", "🐉");
+INTERACTABLE_ICONS.set("ROAD", "👞");
 INTERACTABLE_ICONS.set("WALL", "🧱");
 INTERACTABLE_ICONS.set("HOLE", "🕳️");
 
@@ -378,22 +378,30 @@ function createControlItem(label: UIStatement, levelDef: LevelDefinition, suppli
     overlay.setAttribute("style", "position: absolute; display: flex; gap: 5px; background-color: #1a1a1a; padding: 5px;");
 
     if (levelHasMultipleCharacters) {
+        const charContainer = document.createElement("div");
+        charContainer.setAttribute("style", `
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        `);
+
         const knight = createCharacterIcon("knight");
+        knight.setAttribute("style", knight.getAttribute("style")! + "cursor: pointer;");
         knight.onclick = () => {
             character = "knight";
-            overlay.remove();
             updateLabel();
         };
 
         const mage = createCharacterIcon("mage");
+        mage.setAttribute("style", mage.getAttribute("style")! + "cursor: pointer;");
         mage.onclick = () => {
             character = "mage";
-            overlay.remove();
             updateLabel();
         };
 
-        overlay.appendChild(knight);
-        overlay.appendChild(mage);
+        charContainer.appendChild(knight);
+        charContainer.appendChild(mage);
+        overlay.appendChild(charContainer);
     }
 
     const directionSelector = document.createElement("div");
@@ -404,7 +412,6 @@ function createControlItem(label: UIStatement, levelDef: LevelDefinition, suppli
         directionSelect.setAttribute("title", `Change direction to ${direction}`);
         directionSelect.addEventListener("click", () => {
             currentDirection = direction;
-            overlay.remove();
             updateLabel();
         });
         return directionSelect;
@@ -437,7 +444,6 @@ function createControlItem(label: UIStatement, levelDef: LevelDefinition, suppli
             interSelect.setAttribute("title", `Change to ${interactable}`);
             interSelect.addEventListener("click", () => {
                 currentInteractable = interactable;
-                overlay.remove();
                 updateLabel();
             });
             interSelector.appendChild(interSelect);
