@@ -101,7 +101,7 @@ class NotStatement implements UIStatement {
         return `not ${this.condition?.toCode()}`;
     }
     icon(): string {
-        return "🙅‍♀️";
+        return "NOT";
     }
 }
 
@@ -134,7 +134,7 @@ class WhileStatement implements UIStatement {
     }
 
     icon(): string {
-        return "♾️";
+        return "WHILE";
     }
 }
 
@@ -396,32 +396,53 @@ function createControlItem(label: UIStatement, levelDef: LevelDefinition, suppli
         overlay.appendChild(mage);
     }
 
-    for (const direction of ALL_DIRECTIONS) {
-        const select = document.createElement("div");
-        select.textContent = DIRECTION_ICONS.get(direction)!;
-        select.setAttribute("style", "cursor: pointer;");
-        select.setAttribute("title", `Change direction to ${direction}`);
-        select.addEventListener("click", () => {
+    const directionSelector = document.createElement("div");
+    const createDirectionSelect = (direction: Direction) => {
+        const directionSelect = document.createElement("div");
+        directionSelect.textContent = DIRECTION_ICONS.get(direction)!;
+        directionSelect.setAttribute("style", "cursor: pointer;");
+        directionSelect.setAttribute("title", `Change direction to ${direction}`);
+        directionSelect.addEventListener("click", () => {
             currentDirection = direction;
             overlay.remove();
             updateLabel();
         });
-        overlay.appendChild(select);
+        return directionSelect;
     }
 
+    const north = createDirectionSelect("NORTH");
+    north.setAttribute("style", north.getAttribute("style") + "margin-left: 14px; margin-bottom: -7px;");
+    directionSelector.appendChild(north);
+
+    const westEastSelector = document.createElement("div");
+    westEastSelector.setAttribute("style", "display: flex; gap: 5px;");
+    const west = createDirectionSelect("WEST");
+    const east = createDirectionSelect("EAST");
+    westEastSelector.appendChild(west);
+    westEastSelector.appendChild(east);
+    directionSelector.appendChild(westEastSelector);
+
+    const south = createDirectionSelect("SOUTH");
+    south.setAttribute("style", south.getAttribute("style") + "margin-left: 14px; margin-top: -7px;");
+    directionSelector.appendChild(south);
+
+    overlay.appendChild(directionSelector);
+
     if (withInter) {
+        const interSelector = document.createElement("div");
         for (const interactable of ALL_INTERACTABLES) {
-            const select = document.createElement("div");
-            select.textContent = INTERACTABLE_ICONS.get(interactable)!;
-            select.setAttribute("style", "cursor: pointer;");
-            select.setAttribute("title", `Change to ${interactable}`);
-            select.addEventListener("click", () => {
+            const interSelect = document.createElement("div");
+            interSelect.textContent = INTERACTABLE_ICONS.get(interactable)!;
+            interSelect.setAttribute("style", "cursor: pointer;");
+            interSelect.setAttribute("title", `Change to ${interactable}`);
+            interSelect.addEventListener("click", () => {
                 currentInteractable = interactable;
                 overlay.remove();
                 updateLabel();
             });
-            overlay.appendChild(select);
+            interSelector.appendChild(interSelect);
         }
+        overlay.appendChild(interSelector);
     }
 
     let overlayOpen = false;
