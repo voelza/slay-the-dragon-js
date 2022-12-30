@@ -108,15 +108,18 @@ function renderLevel(element: Element, entry: LevelRender): void {
 function renderTile(tile: Tile): Element {
     const tileEle = document.createElement("div");
     let bgColor: string = "transparent";
+    let additional: string = "";
     if (tile === Tile.ROAD) {
         bgColor = "#c9c9c9";
+        additional = "outline: 1px solid gray;";
     } else if (tile === Tile.WALL) {
-        bgColor = "linear-gradient(black, gray)";
+        bgColor = "linear-gradient(black, #606060)";
     }
     tileEle.setAttribute("style", `
     width: 50px;
     height: 50px; 
     background: ${bgColor};
+    ${additional}
     `);
     return tileEle;
 }
