@@ -94,6 +94,10 @@ button:focus-visible {
   gap: 50px;
 }
 
+#worldSelector {
+  font-size: 1rem;
+}
+
 .level-label-container {
   max-width: 1600px;
   width: 100%;

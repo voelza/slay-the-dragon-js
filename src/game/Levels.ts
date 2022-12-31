@@ -40,7 +40,7 @@ export type LevelWorld = {
 export const WORLDS: LevelWorld[] = [
 
     {
-        name: "World #1",
+        name: "#1: Walk in the park...",
         color: "#3b3c3c",
         levels: [
             {
@@ -101,7 +101,7 @@ export const WORLDS: LevelWorld[] = [
         ]
     },
     {
-        name: "World #2",
+        name: "#2: While we are at it...",
         color: "#3a3e3e",
         levels: [
             {
@@ -115,6 +115,7 @@ export const WORLDS: LevelWorld[] = [
                 dragon: { position: { row: 1, column: 7 }, hp: 1 },
                 actions: 2,
                 exludedStatements: [StatementExlude.IF, StatementExlude.NOT],
+                help: `Use: 'WHILE' and '🔍 isNextTo' to repeat a certain set of actions until the condition is no longer 'true'.`
             },
             {
                 level: [
@@ -148,7 +149,7 @@ export const WORLDS: LevelWorld[] = [
         ]
     },
     {
-        name: "World #3",
+        name: "??: More ideas...",
         color: "#282828",
         levels: [
             {
