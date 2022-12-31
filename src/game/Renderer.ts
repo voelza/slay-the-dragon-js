@@ -54,7 +54,7 @@ export function render(element: Element): void {
                 renderDialog(render);
             }
         }
-    }, 1000);
+    }, 500);
 }
 
 function isOnTile(row: number, column: number, position: Position): boolean {

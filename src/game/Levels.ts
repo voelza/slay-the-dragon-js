@@ -89,13 +89,13 @@ export const WORLDS: LevelWorld[] = [
             },
             {
                 level: [
-                    [Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD],
-                    [Tile.HOLE, Tile.HOLE, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE, Tile.HOLE, Tile.HOLE],
-                    [Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE]
+                    [Tile.HOLE, Tile.HOLE, Tile.WALL, Tile.WALL, Tile.ROAD, Tile.ROAD],
+                    [Tile.WALL, Tile.WALL, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE],
+                    [Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE, Tile.HOLE, Tile.HOLE]
                 ],
                 knight: { position: { row: 2, column: 0 } },
-                dragon: { position: { row: 0, column: 7 }, hp: 1 },
-                actions: 9,
+                dragon: { position: { row: 0, column: 5 }, hp: 1 },
+                actions: 7,
                 exludedStatements: [StatementExlude.IS_NEXT_TO, StatementExlude.IF, StatementExlude.WHILE, StatementExlude.NOT],
             },
         ]
@@ -103,36 +103,6 @@ export const WORLDS: LevelWorld[] = [
     {
         name: "World #2",
         color: "#3a3e3e",
-        levels: [
-            {
-                level: [
-                    [Tile.HOLE, Tile.ROAD, Tile.HOLE,],
-                    [Tile.ROAD, Tile.ROAD, Tile.ROAD],
-                    [Tile.HOLE, Tile.ROAD, Tile.HOLE],
-
-                ],
-                knight: { position: { row: 1, column: 1 } },
-                dragon: { position: [{ row: 1, column: 2 }, { row: 0, column: 1 }, { row: 2, column: 1 }, { row: 1, column: 0 }], hp: 1 },
-                actions: 4,
-                solution: `
-                    if(knight.isNextTo(WEST,dragon)) {
-                        knight.attack(WEST);
-                    }
-                    if(knight.isNextTo(EAST,dragon)) {
-                        knight.attack(EAST);
-                    }
-                    if(knight.isNextTo(NORTH,dragon)) {
-                        knight.attack(NORTH);
-                    }
-                    if(knight.isNextTo(SOUTH,dragon)) {
-                        knight.attack(SOUTH);
-                    }`
-            }
-        ]
-    },
-    {
-        name: "World #3",
-        color: "#282828",
         levels: [
             {
                 level: [
@@ -144,7 +114,43 @@ export const WORLDS: LevelWorld[] = [
                 knight: { position: { row: 1, column: 0 } },
                 dragon: { position: { row: 1, column: 7 }, hp: 1 },
                 actions: 2,
+                exludedStatements: [StatementExlude.IF, StatementExlude.NOT],
             },
+            {
+                level: [
+                    [Tile.HOLE, Tile.HOLE, Tile.WALL, Tile.WALL, Tile.ROAD, Tile.ROAD],
+                    [Tile.WALL, Tile.WALL, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE],
+                    [Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE, Tile.HOLE, Tile.HOLE]
+
+                ],
+                knight: { position: { row: 2, column: 0 } },
+                dragon: { position: { row: 0, column: 5 }, hp: 1 },
+                actions: 4,
+                exludedStatements: [StatementExlude.IF, StatementExlude.NOT],
+            },
+            {
+                level: [
+                    [Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL],
+                    [Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD],
+                    [Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.ROAD],
+                    [Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.ROAD],
+                    [Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.ROAD],
+                    [Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.ROAD],
+                    [Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.ROAD],
+                    [Tile.HOLE, Tile.HOLE, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.ROAD],
+                    [Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD],
+                ],
+                knight: { position: { row: 1, column: 0 } },
+                dragon: { position: { row: 8, column: 0 }, hp: 1 },
+                actions: 5,
+                exludedStatements: [StatementExlude.IF, StatementExlude.NOT],
+            }
+        ]
+    },
+    {
+        name: "World #3",
+        color: "#282828",
+        levels: [
             {
                 level: [
                     [Tile.HOLE, Tile.ROAD, Tile.HOLE,],
@@ -227,6 +233,30 @@ export const WORLDS: LevelWorld[] = [
                 dragon: { position: { row: 2, column: 2 }, hp: 2 },
                 actions: 4,
             },
+            {
+                level: [
+                    [Tile.HOLE, Tile.ROAD, Tile.HOLE,],
+                    [Tile.ROAD, Tile.ROAD, Tile.ROAD],
+                    [Tile.HOLE, Tile.ROAD, Tile.HOLE],
+
+                ],
+                knight: { position: { row: 1, column: 1 } },
+                dragon: { position: [{ row: 1, column: 2 }, { row: 0, column: 1 }, { row: 2, column: 1 }, { row: 1, column: 0 }], hp: 1 },
+                actions: 4,
+                solution: `
+                    if(knight.isNextTo(WEST,dragon)) {
+                        knight.attack(WEST);
+                    }
+                    if(knight.isNextTo(EAST,dragon)) {
+                        knight.attack(EAST);
+                    }
+                    if(knight.isNextTo(NORTH,dragon)) {
+                        knight.attack(NORTH);
+                    }
+                    if(knight.isNextTo(SOUTH,dragon)) {
+                        knight.attack(SOUTH);
+                    }`
+            }
         ]
     }
 ]

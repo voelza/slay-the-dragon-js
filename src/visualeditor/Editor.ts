@@ -478,6 +478,7 @@ function createVSInput(ast: AST) {
         gap: 5px;
         padding: 5px;
         box-sizing: border-box;
+        padding-bottom: 25px;
     `);
 
     addStmtDrop(vsInput, "program", ast.push.bind(ast));
