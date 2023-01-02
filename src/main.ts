@@ -2,7 +2,24 @@ import { determineActionCount, Game, GameState } from './game/Game';
 import { render } from './game/Renderer';
 import './style.css';
 import { LevelDefinition, LevelWorld, WORLDS } from './game/Levels';
-import { createEditor } from './visualeditor/Editor';
+import { createEditor as createButtonEditor } from './visualeditor/Editor';
+import { createEditor as createDragDropEditor } from './visualeditor/DragDropEditor';
+
+let createEditor = createButtonEditor;
+const toggleEditor = () => {
+  if (createEditor === createButtonEditor) {
+    createEditor = createDragDropEditor;
+  } else {
+    createEditor = createButtonEditor;
+  }
+}
+
+window.onkeydown = (e) => {
+  if (e.key === "t") {
+    toggleEditor();
+    initGame();
+  }
+};
 
 const levelContainer = document.getElementById("level")!;
 const levelSelector = document.getElementById("levelSelector")!
