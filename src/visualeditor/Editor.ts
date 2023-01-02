@@ -455,6 +455,7 @@ function createDirectionSelector(callback: (direction: Direction) => void): Elem
     addStyle(btn, "width: fit-content; cursor: pointer;");
     const updateLabel = () => {
         btn.textContent = DIRECTION_ICONS.get(globalCurrentDirection)!;
+        btn.setAttribute("title", `to the ${globalCurrentDirection} of your character`);
     }
     updateLabel();
 
@@ -472,18 +473,20 @@ function createDirectionSelector(callback: (direction: Direction) => void): Elem
     box-shadow: 2px 3px black;
     `);
     const createDirectionSelect = (direction: Direction) => {
-        const directionSelect = document.createElement("div");
-        directionSelect.textContent = DIRECTION_ICONS.get(direction)!;
-        directionSelect.setAttribute("style", "cursor: pointer;");
-        directionSelect.addEventListener("click", () => {
+        const select = document.createElement("div");
+        select.textContent = DIRECTION_ICONS.get(direction)!;
+        select.setAttribute("style", "cursor: pointer;");
+        select.setAttribute("title", `to the ${direction} of your character`);
+        select.addEventListener("click", () => {
             globalCurrentDirection = direction;
             updateLabel();
             callback(direction);
         });
-        return directionSelect;
+        return select;
     }
 
     const north = createDirectionSelect("NORTH");
+    addStyle(north, "margin: auto;");
     directionSelector.appendChild(north);
 
     const westEastSelector = document.createElement("div");
@@ -495,6 +498,7 @@ function createDirectionSelector(callback: (direction: Direction) => void): Elem
     directionSelector.appendChild(westEastSelector);
 
     const south = createDirectionSelect("SOUTH");
+    addStyle(south, "margin: auto;");
     directionSelector.appendChild(south);
 
     let overlayVisible = false;
@@ -514,6 +518,7 @@ function createInteractableSelector(callback: (interactable: Interactable) => vo
     addStyle(btn, "width: fit-content;  cursor: pointer;");
     const updateLabel = () => {
         btn.textContent = INTERACTABLE_ICONS.get(globalInteractable)!;
+        btn.setAttribute("title", globalInteractable);
     }
     updateLabel();
 
@@ -531,15 +536,16 @@ function createInteractableSelector(callback: (interactable: Interactable) => vo
     box-shadow: 2px 3px black;
     `);
     const createInteractableSelect = (interactable: Interactable) => {
-        const directionSelect = document.createElement("div");
-        directionSelect.textContent = INTERACTABLE_ICONS.get(interactable)!;
-        directionSelect.setAttribute("style", "cursor: pointer;");
-        directionSelect.addEventListener("click", () => {
+        const select = document.createElement("div");
+        select.textContent = INTERACTABLE_ICONS.get(interactable)!;
+        select.setAttribute("style", "cursor: pointer;");
+        select.setAttribute("title", interactable);
+        select.addEventListener("click", () => {
             globalInteractable = interactable;
             updateLabel();
             callback(interactable);
         });
-        return directionSelect;
+        return select;
     }
     for (const inter of ALL_INTERACTABLES) {
         interactableSelector.appendChild(createInteractableSelect(inter));
@@ -557,12 +563,15 @@ function createInteractableSelector(callback: (interactable: Interactable) => vo
     return btn;
 }
 
-function createCharacterSelector(callback: (character: Character) => void): Element {
+function createCharacterSelector(callback: (character: Character) => void, withColon: boolean = false): HTMLElement {
     const btn = createBase();
     addStyle(btn, "width: fit-content;  cursor: pointer;");
     const updateLabel = () => {
         btn.innerHTML = "";
         btn.appendChild(createCharacterIcon(globalCharacter));
+        if (withColon) {
+            btn.appendChild(createLabelElement(": "));
+        }
     }
     updateLabel();
 
@@ -580,15 +589,15 @@ function createCharacterSelector(callback: (character: Character) => void): Elem
     box-shadow: 2px 3px black;
     `);
     const createCharacterSelect = (character: Character) => {
-        const directionSelect = document.createElement("div");
-        directionSelect.appendChild(createCharacterIcon(character));
-        directionSelect.setAttribute("style", "cursor: pointer;");
-        directionSelect.addEventListener("click", () => {
+        const select = document.createElement("div");
+        select.appendChild(createCharacterIcon(character));
+        select.setAttribute("style", "cursor: pointer;");
+        select.addEventListener("click", () => {
             globalCharacter = character;
             updateLabel();
             callback(character);
         });
-        return directionSelect;
+        return select;
     }
     characterSelector.appendChild(createCharacterSelect("knight"));
     characterSelector.appendChild(createCharacterSelect("mage"));
@@ -615,13 +624,9 @@ function renderStmt(stmt: UIStatement, astFunctions: ASTFunctions, levelDef: Ren
         addDirectionStmt(element, astFunctions, stmt);
     } else if (stmt instanceof SupportStatement) {
         addDirectionStmt(element, astFunctions, stmt);
-    } else if (stmt instanceof IsNextToStatement) {
-        addIsNextToStmt(element, astFunctions, stmt);
     } else if (stmt instanceof IfStatement) {
         addControlFlowStmt(element, stmt, astFunctions, levelDef);
     } else if (stmt instanceof WhileStatement) {
-        addControlFlowStmt(element, stmt, astFunctions, levelDef);
-    } else if (stmt instanceof NotStatement) {
         addControlFlowStmt(element, stmt, astFunctions, levelDef);
     }
 
@@ -631,19 +636,11 @@ function renderStmt(stmt: UIStatement, astFunctions: ASTFunctions, levelDef: Ren
 function addDirectionStmt(element: HTMLElement, astFunctions: ASTFunctions, stmt: MoveStatement | AttackStatement): void {
     const { character, direction } = stmt;
     element.appendChild(createCharacterIcon(character));
-    element.appendChild(createMethod(`: ${stmt.icon()}${DIRECTION_ICONS.get(direction)}`));
+    element.appendChild(createLabelElement(`: ${stmt.icon()}${DIRECTION_ICONS.get(direction)}`));
     element.appendChild(createASTManipulationButtons(astFunctions, stmt));
 }
 
-function addIsNextToStmt(element: HTMLElement, astFunctions: ASTFunctions, stmt: IsNextToStatement): void {
-    const { character, direction, interactable } = stmt;
-    element.appendChild(createCharacterIcon(character));
-    element.appendChild(createMethod(`: ${stmt.icon()}${DIRECTION_ICONS.get(direction)}${INTERACTABLE_ICONS.get(interactable)}`));
-    element.appendChild(createASTManipulationButtons(astFunctions, stmt));
-}
-
-const CONDITION_EXLUDES = [StatementExlude.MOVE, StatementExlude.ATTACK, StatementExlude.SUPPORT, StatementExlude.IF, StatementExlude.WHILE];
-function addControlFlowStmt(element: HTMLElement, stmt: IfStatement | WhileStatement | NotStatement, astFunctions: ASTFunctions, levelDef: RenderLevelDef): void {
+function addControlFlowStmt(element: HTMLElement, stmt: IfStatement | WhileStatement, astFunctions: ASTFunctions, levelDef: RenderLevelDef): void {
     addStyle(element, "padding: 0;");
     const { notify } = astFunctions;
 
@@ -679,15 +676,8 @@ function addControlFlowStmt(element: HTMLElement, stmt: IfStatement | WhileState
     width: 100%;
     `);
 
-    const setCondition = (s: UIStatement) => { stmt.condition = s; notify!(); };
-    if (stmt.condition) {
-        conditionArea.appendChild(renderStmt(stmt.condition, { pushStmt: setCondition, removeStmt: () => { stmt.condition = undefined; notify!(); }, notify }, levelDef));
-    }
-
     conditionContainer.appendChild(conditionArea);
-
-    const conditionExludes = [...CONDITION_EXLUDES, ...levelDef.exludedStatements];
-    conditionArea.appendChild(createAddStmtButton(setCondition, { exludedStatements: conditionExludes, hasMage: levelDef.hasMage }, !stmt.condition, !stmt.condition ? "~ change" : "+add"));
+    conditionArea.appendChild(renderCondition(levelDef, stmt));
 
     controlFlowStmt.appendChild(conditionContainer);
 
@@ -725,6 +715,65 @@ function addControlFlowStmt(element: HTMLElement, stmt: IfStatement | WhileState
     element.appendChild(controlFlowStmt);
 }
 
+function renderCondition(levelDef: RenderLevelDef, stmt: IfStatement | WhileStatement): Element {
+    let isNot: boolean = false;
+    let character: Character = globalCharacter;
+    let currentDirection: Direction = globalCurrentDirection;
+    let currentInteractable: Interactable = globalInteractable;
+
+    const updateCondition = () => {
+        stmt.condition = new IsNextToStatement(character, currentDirection, currentInteractable);
+        if (isNot) {
+            stmt.condition = new NotStatement(stmt.condition);
+        }
+    };
+
+    const element = document.createElement("div");
+    element.setAttribute("style", `
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        gap: 5px;
+        align-items: center;
+    `);
+
+    const characterSelector = createCharacterSelector((c) => {
+        character = c;
+        updateCondition();
+    }, true);
+    if (!levelDef.hasMage) {
+        characterSelector.onclick = () => { };
+    }
+    element.appendChild(characterSelector);
+    element.appendChild(createDirectionSelector((d) => {
+        currentDirection = d;
+        updateCondition();
+    }));
+
+    const isNotToggle = createBase();
+    addStyle(isNotToggle, "cursor: pointer;");
+    isNotToggle.textContent = " is next to ";
+    if (!levelDef.exludedStatements.includes(StatementExlude.NOT)) {
+        isNotToggle.setAttribute("title", "Click to negate statement");
+        isNotToggle.onclick = () => {
+            isNot = !isNot;
+            if (isNot) {
+                isNotToggle.textContent = " is not next to ";
+            } else {
+                isNotToggle.textContent = " is next to ";
+            }
+            updateCondition();
+        }
+    }
+    element.appendChild(isNotToggle);
+
+    element.appendChild(createInteractableSelector((i) => {
+        currentInteractable = i;
+        updateCondition();
+    }));
+    return element;
+}
+
 function createCharacterIcon(character: Character): HTMLElement {
     const charIcon = document.createElement("img");
     charIcon.setAttribute("style", "width: 1rem; height: 1rem; object-fit: cover;");
@@ -736,7 +785,7 @@ function createCharacterIcon(character: Character): HTMLElement {
     return charIcon;
 }
 
-function createMethod(label: string): Element {
+function createLabelElement(label: string): Element {
     const method = document.createElement("span");
     method.textContent = label;
     return method;
@@ -833,3 +882,20 @@ function createTab(ast: AST, label: string, active: boolean = false): Element {
     return tab;
 }
 
+function createSwitch(onChange: (val: boolean) => void): HTMLElement {
+    const label = document.createElement("label");
+    label.classList.add("switch");
+
+    const input = document.createElement("input");
+    input.setAttribute("type", "checkbox");
+    let val = false;
+    input.addEventListener("input", () => { val = !val; onChange(val); });
+
+    const span = document.createElement("span");
+    span.classList.add("slider");
+    span.classList.add("round");
+
+    label.appendChild(input);
+    label.appendChild(span);
+    return label;
+}
