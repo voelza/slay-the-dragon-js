@@ -882,20 +882,20 @@ function createTab(ast: AST, label: string, active: boolean = false): Element {
     return tab;
 }
 
-function createSwitch(onChange: (val: boolean) => void): HTMLElement {
-    const label = document.createElement("label");
-    label.classList.add("switch");
+// function createSwitch(onChange: (val: boolean) => void): HTMLElement {
+//     const label = document.createElement("label");
+//     label.classList.add("switch");
 
-    const input = document.createElement("input");
-    input.setAttribute("type", "checkbox");
-    let val = false;
-    input.addEventListener("input", () => { val = !val; onChange(val); });
+//     const input = document.createElement("input");
+//     input.setAttribute("type", "checkbox");
+//     let val = false;
+//     input.addEventListener("input", () => { val = !val; onChange(val); });
 
-    const span = document.createElement("span");
-    span.classList.add("slider");
-    span.classList.add("round");
+//     const span = document.createElement("span");
+//     span.classList.add("slider");
+//     span.classList.add("round");
 
-    label.appendChild(input);
-    label.appendChild(span);
-    return label;
-}
+//     label.appendChild(input);
+//     label.appendChild(span);
+//     return label;
+// }
