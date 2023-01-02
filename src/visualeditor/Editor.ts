@@ -165,6 +165,31 @@ class AST {
         this.notify();
     }
 
+    moveDown(stmt: UIStatement): void {
+        const currentIndex = this.ast.indexOf(stmt);
+        if (currentIndex === this.ast.length - 1) {
+            return;
+        }
+
+        if (currentIndex !== -1) {
+            this.ast.splice(currentIndex, 1);
+            this.ast.splice(currentIndex + 1, 0, stmt);
+        }
+        this.notify();
+    }
+    moveUp(stmt: UIStatement): void {
+        const currentIndex = this.ast.indexOf(stmt);
+        if (currentIndex === 0) {
+            return;
+        }
+
+        if (currentIndex !== -1) {
+            this.ast.splice(currentIndex, 1);
+            this.ast.splice(currentIndex - 1, 0, stmt);
+        }
+        this.notify();
+    }
+
     reset() {
         this.ast = [];
         this.notify();
@@ -202,67 +227,35 @@ class AST {
         const mainProgram = this.tabASTMap.get("main")!.map(stmt => stmt.toCode()).join("\n");
         return code + mainProgram;
     }
-}
 
-let dragItemSupplier: (() => UIStatement | undefined) | undefined;
-let targetGroup: string | undefined;
-const groupDropAreas: Map<string, HTMLElement[]> = new Map();
-let dragOverAreaId: number | undefined;
-let idCounter: number = 0;
-
-function addStmtDrag(element: HTMLElement, supplier: () => UIStatement | undefined, group: string): void {
-    element.draggable = true;
-    element.ondragstart = () => {
-        if (dragItemSupplier !== undefined) {
-            return;
-        }
-
-        dragItemSupplier = supplier;
-        targetGroup = group;
-        for (const areas of (groupDropAreas.get(group) ?? [])) {
-            areas.classList.add("drag-highlight");
-        }
-    };
-    element.ondragend = () => {
-        dragItemSupplier = undefined;
-        targetGroup = undefined;
-        for (const areas of (groupDropAreas.get(group) ?? [])) {
-            areas.classList.remove("drag-highlight");
+    toAstFunctions(): ASTFunctions {
+        return {
+            pushStmt: this.push.bind(this),
+            removeStmt: this.remove.bind(this),
+            moveDown: this.moveDown.bind(this),
+            moveUp: this.moveUp.bind(this),
+            notify: this.notify.bind(this)
         }
     }
 }
 
-function addStmtDrop(element: HTMLElement, group: string, target: ((stmt: UIStatement) => void) | undefined = undefined): void {
-    const id = ++idCounter;
-    element.ondragover = (e) => {
-        e.preventDefault();
-        if (dragOverAreaId === undefined) {
-            dragOverAreaId = id;
-        }
-    };
-    element.ondragleave = () => {
-        if (dragOverAreaId === id) {
-            dragOverAreaId = undefined;
-        }
-    }
+type ASTFunctions = {
+    pushStmt?: (stmt: UIStatement) => void,
+    removeStmt?: (stmt: UIStatement) => void,
+    moveUp?: (stmt: UIStatement) => void,
+    moveDown?: (stmt: UIStatement) => void,
+    notify?: () => void
+}
 
-    element.ondrop = () => {
-        if (!dragItemSupplier || !target || group !== targetGroup) {
-            return;
-        }
-        if (id !== dragOverAreaId) {
-            return;
-        }
-        dragOverAreaId = undefined;
-        const dragItem = dragItemSupplier();
-        if (dragItem) {
-            target(dragItem);
-        }
-    };
+type ControlItem = {
+    stmtDef: UIStatement,
+    pushStmt: (stmt: UIStatement) => void,
+    supplier: () => UIStatement
+};
 
-    const dragAreaGroup = groupDropAreas.get(group) ?? [];
-    dragAreaGroup.push(element);
-    groupDropAreas.set(group, dragAreaGroup);
+type RenderLevelDef = {
+    exludedStatements: StatementExlude[],
+    hasMage?: boolean
 }
 
 export function createEditor(element: Element, levelDef: LevelDefinition, stateObserver: () => void): [CodeGetter, Resetter] {
@@ -277,18 +270,16 @@ export function createEditor(element: Element, levelDef: LevelDefinition, stateO
         width: 100%;
     `);
 
-    const controls = createControls(levelDef, ast);
-    vsEditor.appendChild(controls);
-
     const tabs = createTabs(levelDef, ast);
     vsEditor.appendChild(tabs);
 
-    const vsInput = createVSInput(ast);
+    const vsInput = createVSInput();
     vsEditor.appendChild(vsInput);
+    renderProgram(vsInput, levelDef, ast);
 
     element.appendChild(vsEditor);
 
-    ast.addObserver(() => renderProgram(vsInput, ast));
+    ast.addObserver(() => renderProgram(vsInput, levelDef, ast));
     ast.addObserver(stateObserver);
     return [
         () => ast.toCode(),
@@ -296,50 +287,152 @@ export function createEditor(element: Element, levelDef: LevelDefinition, stateO
     ];
 }
 
-function createControls(levelDef: LevelDefinition, ast: AST): Element {
-    const controls = document.createElement("div");
-    controls.setAttribute("style", `
-        display:flex;
-        flex-direction: column;
-        gap: 5px;
-        margin-top: -40px;
-        margin-bottom: 5px;
+function createVSInput(): Element {
+    const vsInput = document.createElement("div");
+    vsInput.setAttribute("style", `
+    background-color: #3b3b3b;
+    height: 93%;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 5px;
+    box-sizing: border-box;
+    padding-bottom: 25px;
     `);
+    return vsInput;
+}
 
-    const trash = document.createElement("button");
-    trash.setAttribute("style", `
-        width: 55px;
-        padding: 10px;
-    `);
-    trash.setAttribute("title", "Click to delete your whole program.");
-    trash.textContent = "🗑️";
-    trash.onclick = () => ast.reset();
-    addStmtDrop(trash, "control", ast.remove.bind(ast));
-    controls.appendChild(trash);
-
-
-    const controlsContainer = document.createElement("div");
-    controlsContainer.setAttribute("style", `
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 5px;
-    `);
-
-
-    const stmtExludes = levelDef.exludedStatements ?? [];
-    isNotExluded(stmtExludes, StatementExlude.MOVE, () => controlsContainer.appendChild(createControlItem(MoveStatement.prototype, levelDef, (char, dir) => new MoveStatement(char, dir))));
-    isNotExluded(stmtExludes, StatementExlude.ATTACK, () => controlsContainer.appendChild(createControlItem(AttackStatement.prototype, levelDef, (char, dir) => new AttackStatement(char, dir))));
-    if (levelDef.mage) {
-        isNotExluded(stmtExludes, StatementExlude.SUPPORT, () => controlsContainer.appendChild(createControlItem(SupportStatement.prototype, levelDef, (char, dir) => new SupportStatement(char, dir))));
+const TOP_LEVEL_EXCLUDES: StatementExlude[] = [StatementExlude.IS_NEXT_TO, StatementExlude.NOT];
+function renderProgram(element: Element, levelDef: LevelDefinition, ast: AST): void {
+    element.innerHTML = "";
+    for (const stmt of ast.ast) {
+        element.appendChild(renderStmt(stmt, ast.toAstFunctions(), { exludedStatements: levelDef.exludedStatements ?? [], hasMage: levelDef.mage !== undefined }));
     }
-    isNotExluded(stmtExludes, StatementExlude.IS_NEXT_TO, () => controlsContainer.appendChild(createControlItem(IsNextToStatement.prototype, levelDef, (char, dir, inter) => new IsNextToStatement(char, dir, inter!), true)));
-    isNotExluded(stmtExludes, StatementExlude.IF, () => controlsContainer.appendChild(createControlFlowItem(IfStatement.prototype, () => new IfStatement())));
-    isNotExluded(stmtExludes, StatementExlude.WHILE, () => controlsContainer.appendChild(createControlFlowItem(WhileStatement.prototype, () => new WhileStatement())));
-    isNotExluded(stmtExludes, StatementExlude.NOT, () => controlsContainer.appendChild(createControlFlowItem(NotStatement.prototype, () => new NotStatement())));
+    element.appendChild(
+        createAddStmtButton(
+            ast.push.bind(ast),
+            { exludedStatements: [...levelDef.exludedStatements ?? [], ...TOP_LEVEL_EXCLUDES], hasMage: levelDef.mage !== undefined },
+            false
+        )
+    );
+}
 
-    controls.appendChild(controlsContainer);
-    return controls;
+function createAddStmtButton(pushStmt: (stmt: UIStatement) => void, levelDef: RenderLevelDef, stmtsVisible: boolean, labelStr: string = "+ add"): Element {
+    const addBtn = createBase();
+    addStyle(addBtn, `
+    text-align: center; 
+    font-size: 1rem;
+    color: #8f8282;
+    background-color: #4c4a4a; 
+    padding: 5px;
+    `);
+
+    const label = document.createElement("div");
+    label.setAttribute("style", "cursor: pointer;");
+    label.textContent = labelStr;
+    addBtn.appendChild(label);
+
+    const stms = createStmts(levelDef, pushStmt);
+    if (stmtsVisible) {
+        addBtn.appendChild(stms);
+    } else {
+        stms.remove();
+    }
+
+    label.onclick = () => {
+        stmtsVisible = !stmtsVisible;
+        if (stmtsVisible) {
+            addBtn.appendChild(stms);
+        } else {
+            stms.remove();
+        }
+    }
+    return addBtn;
+}
+
+let globalCharacter: Character = "knight";
+let globalCurrentDirection: Direction = ALL_DIRECTIONS[0];
+let globalInteractable: Interactable = ALL_INTERACTABLES[0];
+function createStmts(levelDef: RenderLevelDef, pushStmt: (stmt: UIStatement) => void): Element {
+    let character: Character = globalCharacter;
+    let currentDirection: Direction = globalCurrentDirection;
+    let currentInteractable: Interactable = globalInteractable;
+
+    const stmts = document.createElement("div");
+    stmts.setAttribute("style", "display: flex; flex-direction: column; gap: 5px; justify-content: center; align-items: center;");
+
+    const options = document.createElement("div");
+    options.setAttribute("style", "display: flex; gap: 5px; justify-content: center; align-items: center;");
+    if (levelDef.hasMage) {
+        options.appendChild(createCharacterSelector((c) => {
+            character = c;
+            fillControlItems();
+        }));
+    }
+    options.appendChild(createDirectionSelector((direction) => {
+        currentDirection = direction;
+    }));
+    if (!levelDef.exludedStatements.includes(StatementExlude.IS_NEXT_TO)) {
+        options.appendChild(createInteractableSelector((inter) => {
+            currentInteractable = inter;
+        }));
+    }
+    stmts.appendChild(options);
+
+    const stmtsContainer = document.createElement("div");
+    stmtsContainer.setAttribute("style", "display: flex; gap: 5px; justify-content: center;");
+
+    const stdControlItem = { pushStmt };
+
+    const stmtExludes = levelDef.exludedStatements;
+    const fillControlItems = () => {
+        stmtsContainer.innerHTML = "";
+
+        isNotExluded(
+            stmtExludes,
+            StatementExlude.MOVE,
+            () => stmtsContainer.appendChild(createControlItem(
+                { ...stdControlItem, stmtDef: MoveStatement.prototype, supplier: () => new MoveStatement(character, currentDirection) }
+            )));
+
+        if (character === "knight") {
+            isNotExluded(
+                stmtExludes,
+                StatementExlude.ATTACK,
+                () => stmtsContainer.appendChild(createControlItem(
+                    { ...stdControlItem, stmtDef: AttackStatement.prototype, supplier: () => new AttackStatement(character, currentDirection) }
+                )));
+        }
+
+        if (levelDef.hasMage && character === "mage") {
+            isNotExluded(
+                stmtExludes,
+                StatementExlude.SUPPORT,
+                () => stmtsContainer.appendChild(createControlItem(
+                    { ...stdControlItem, stmtDef: SupportStatement.prototype, supplier: () => new SupportStatement(character, currentDirection) }
+                )));
+        }
+        isNotExluded(
+            stmtExludes,
+            StatementExlude.IS_NEXT_TO,
+            () => stmtsContainer.appendChild(createControlItem(
+                { ...stdControlItem, stmtDef: IsNextToStatement.prototype, supplier: () => new IsNextToStatement(character, currentDirection, currentInteractable) }
+            )));
+        isNotExluded(stmtExludes, StatementExlude.IF, () => stmtsContainer.appendChild(createControlItem(
+            { ...stdControlItem, stmtDef: IfStatement.prototype, supplier: () => new IfStatement() }
+        )));
+        isNotExluded(stmtExludes, StatementExlude.WHILE, () => stmtsContainer.appendChild(createControlItem(
+            { ...stdControlItem, stmtDef: WhileStatement.prototype, supplier: () => new WhileStatement() }
+        )));
+        isNotExluded(stmtExludes, StatementExlude.NOT, () => stmtsContainer.appendChild(createControlItem(
+            { ...stdControlItem, stmtDef: NotStatement.prototype, supplier: () => new NotStatement() }
+        )));
+    }
+
+    fillControlItems();
+    stmts.appendChild(stmtsContainer);
+    return stmts;
 }
 
 function isNotExluded(excludes: StatementExlude[], expected: StatementExlude, callback: () => void) {
@@ -348,77 +441,49 @@ function isNotExluded(excludes: StatementExlude[], expected: StatementExlude, ca
     }
 }
 
-function createControlFlowItem(label: UIStatement, supplier: () => UIStatement): Element {
+function createControlItem(controlItem: ControlItem): Element {
+    const { stmtDef, pushStmt, supplier } = controlItem;
     const item = createBase();
-    item.textContent = label.icon();
-    addStmtDrag(item, () => supplier(), "program");
+    addStyle(item, "cursor: pointer;");
+    item.textContent = stmtDef.icon();
+    item.onclick = () => pushStmt(supplier());
     return item;
 }
 
-function createControlItem(label: UIStatement, levelDef: LevelDefinition, supplier: (character: Character, direction: Direction, interactable: Interactable | undefined) => UIStatement, withInter: boolean = false): Element {
-    const levelHasMultipleCharacters = levelDef.mage !== undefined;
-
-    const item = createBase();
-    let character: Character = "knight";
-    let currentDirection: Direction = ALL_DIRECTIONS[0];
-    let currentInteractable: Interactable | undefined = withInter ? ALL_INTERACTABLES[0] : undefined;
-
+function createDirectionSelector(callback: (direction: Direction) => void): Element {
+    const btn = createBase();
+    addStyle(btn, "width: fit-content; cursor: pointer;");
     const updateLabel = () => {
-        item.innerHTML = "";
-        if (levelHasMultipleCharacters) {
-            item.appendChild(createCharacterIcon(character));
-        }
-        const txt = document.createElement("span");
-        txt.textContent = `${levelHasMultipleCharacters ? ": " : ""} ${label.icon()}${DIRECTION_ICONS.get(currentDirection)}${currentInteractable ? INTERACTABLE_ICONS.get(currentInteractable) : ""}`;
-        item.appendChild(txt);
+        btn.textContent = DIRECTION_ICONS.get(globalCurrentDirection)!;
     }
     updateLabel();
 
-    const overlay = document.createElement("div");
-    overlay.setAttribute("style", "position: absolute; display: flex; gap: 5px; background-color: #1a1a1a; padding: 5px;");
-
-    if (levelHasMultipleCharacters) {
-        const charContainer = document.createElement("div");
-        charContainer.setAttribute("style", `
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        `);
-
-        const knight = createCharacterIcon("knight");
-        knight.setAttribute("style", knight.getAttribute("style")! + "cursor: pointer;");
-        knight.onclick = () => {
-            character = "knight";
-            updateLabel();
-        };
-
-        const mage = createCharacterIcon("mage");
-        mage.setAttribute("style", mage.getAttribute("style")! + "cursor: pointer;");
-        mage.onclick = () => {
-            character = "mage";
-            updateLabel();
-        };
-
-        charContainer.appendChild(knight);
-        charContainer.appendChild(mage);
-        overlay.appendChild(charContainer);
-    }
-
     const directionSelector = document.createElement("div");
+    directionSelector.setAttribute("style", `
+    display: flex;
+    flex-direction: column;    
+    justify-content: center;
+    width: fit-content;
+    position: absolute;
+    background-color: #383838;
+    padding: 5px;
+    border-radius: 0px 5px 0px 15px;
+    margin-left: 25px;
+    box-shadow: 2px 3px black;
+    `);
     const createDirectionSelect = (direction: Direction) => {
         const directionSelect = document.createElement("div");
         directionSelect.textContent = DIRECTION_ICONS.get(direction)!;
         directionSelect.setAttribute("style", "cursor: pointer;");
-        directionSelect.setAttribute("title", `Change direction to ${direction}`);
         directionSelect.addEventListener("click", () => {
-            currentDirection = direction;
+            globalCurrentDirection = direction;
             updateLabel();
+            callback(direction);
         });
         return directionSelect;
     }
 
     const north = createDirectionSelect("NORTH");
-    north.setAttribute("style", north.getAttribute("style") + "margin-left: 14px; margin-bottom: -7px;");
     directionSelector.appendChild(north);
 
     const westEastSelector = document.createElement("div");
@@ -430,123 +495,169 @@ function createControlItem(label: UIStatement, levelDef: LevelDefinition, suppli
     directionSelector.appendChild(westEastSelector);
 
     const south = createDirectionSelect("SOUTH");
-    south.setAttribute("style", south.getAttribute("style") + "margin-left: 14px; margin-top: -7px;");
     directionSelector.appendChild(south);
 
-    overlay.appendChild(directionSelector);
-
-    if (withInter) {
-        const interSelector = document.createElement("div");
-        for (const interactable of ALL_INTERACTABLES) {
-            const interSelect = document.createElement("div");
-            interSelect.textContent = INTERACTABLE_ICONS.get(interactable)!;
-            interSelect.setAttribute("style", "cursor: pointer;");
-            interSelect.setAttribute("title", `Change to ${interactable}`);
-            interSelect.addEventListener("click", () => {
-                currentInteractable = interactable;
-                updateLabel();
-            });
-            interSelector.appendChild(interSelect);
-        }
-        overlay.appendChild(interSelector);
-    }
-
-    let overlayOpen = false;
-    item.onclick = () => {
-        if (overlayOpen) {
-            overlayOpen = false;
-            overlay.remove();
+    let overlayVisible = false;
+    btn.onclick = () => {
+        overlayVisible = !overlayVisible;
+        if (overlayVisible) {
+            btn.appendChild(directionSelector);
         } else {
-            overlayOpen = true;
-            item.appendChild(overlay);
+            directionSelector.remove();
         }
-    };
-
-    addStmtDrag(item, () => supplier(character, currentDirection, currentInteractable), "program");
-
-    return item;
-}
-
-function createVSInput(ast: AST) {
-    const vsInput = document.createElement("div");
-    vsInput.setAttribute("style", `
-        background-color: #3b3b3b;
-        height: 78%;
-        overflow: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-        padding: 5px;
-        box-sizing: border-box;
-        padding-bottom: 25px;
-    `);
-
-    addStmtDrop(vsInput, "program", ast.push.bind(ast));
-    return vsInput;
-}
-
-function renderProgram(element: Element, ast: AST): void {
-    element.innerHTML = "";
-    for (const stmt of ast.ast) {
-        element.appendChild(renderTopLevelStmt(stmt, ast));
     }
+    return btn;
 }
 
-function renderTopLevelStmt(stmt: UIStatement, ast: AST): Element {
-    const element = renderStmt(stmt, ast);
-    addStmtDrag(element, () => stmt, "control");
-    return element;
+function createInteractableSelector(callback: (interactable: Interactable) => void): Element {
+    const btn = createBase();
+    addStyle(btn, "width: fit-content;  cursor: pointer;");
+    const updateLabel = () => {
+        btn.textContent = INTERACTABLE_ICONS.get(globalInteractable)!;
+    }
+    updateLabel();
+
+    const interactableSelector = document.createElement("div");
+    interactableSelector.setAttribute("style", `
+    display: flex;
+    flex-direction: column;    
+    justify-content: center;
+    width: fit-content;
+    position: absolute;
+    background-color: #383838;
+    padding: 5px;
+    border-radius: 0px 5px 0px 15px;
+    margin-left: 25px;
+    box-shadow: 2px 3px black;
+    `);
+    const createInteractableSelect = (interactable: Interactable) => {
+        const directionSelect = document.createElement("div");
+        directionSelect.textContent = INTERACTABLE_ICONS.get(interactable)!;
+        directionSelect.setAttribute("style", "cursor: pointer;");
+        directionSelect.addEventListener("click", () => {
+            globalInteractable = interactable;
+            updateLabel();
+            callback(interactable);
+        });
+        return directionSelect;
+    }
+    for (const inter of ALL_INTERACTABLES) {
+        interactableSelector.appendChild(createInteractableSelect(inter));
+    }
+
+    let overlayVisible = false;
+    btn.onclick = () => {
+        overlayVisible = !overlayVisible;
+        if (overlayVisible) {
+            btn.appendChild(interactableSelector);
+        } else {
+            interactableSelector.remove();
+        }
+    }
+    return btn;
 }
 
-function renderInnerLevelStmt(stmt: UIStatement, remover: () => void, ast: AST): Element {
-    const element = renderStmt(stmt, ast);
-    addStmtDrag(element, () => { remover(); return undefined; }, "control");
-    return element;
+function createCharacterSelector(callback: (character: Character) => void): Element {
+    const btn = createBase();
+    addStyle(btn, "width: fit-content;  cursor: pointer;");
+    const updateLabel = () => {
+        btn.innerHTML = "";
+        btn.appendChild(createCharacterIcon(globalCharacter));
+    }
+    updateLabel();
+
+    const characterSelector = document.createElement("div");
+    characterSelector.setAttribute("style", `
+    display: flex;
+    flex-direction: column;    
+    justify-content: center;
+    width: fit-content;
+    position: absolute;
+    background-color: #383838;
+    padding: 5px;
+    border-radius: 0px 5px 0px 15px;
+    margin-left: 25px;
+    box-shadow: 2px 3px black;
+    `);
+    const createCharacterSelect = (character: Character) => {
+        const directionSelect = document.createElement("div");
+        directionSelect.appendChild(createCharacterIcon(character));
+        directionSelect.setAttribute("style", "cursor: pointer;");
+        directionSelect.addEventListener("click", () => {
+            globalCharacter = character;
+            updateLabel();
+            callback(character);
+        });
+        return directionSelect;
+    }
+    characterSelector.appendChild(createCharacterSelect("knight"));
+    characterSelector.appendChild(createCharacterSelect("mage"));
+
+    let overlayVisible = false;
+    btn.onclick = () => {
+        overlayVisible = !overlayVisible;
+        if (overlayVisible) {
+            btn.appendChild(characterSelector);
+        } else {
+            characterSelector.remove();
+        }
+    }
+    return btn;
 }
 
-function renderStmt(stmt: UIStatement, ast: AST): HTMLElement {
+function renderStmt(stmt: UIStatement, astFunctions: ASTFunctions, levelDef: RenderLevelDef): HTMLElement {
     const element = createBase();
-    element.setAttribute("style", element.getAttribute("style")! + "display: flex; align-items: center; gap: 5px;");
+    addStyle(element, "display: flex; align-items: center; gap: 5px;");
 
     if (stmt instanceof MoveStatement) {
-        addDirectionStmt(element, stmt);
+        addDirectionStmt(element, astFunctions, stmt);
     } else if (stmt instanceof AttackStatement) {
-        addDirectionStmt(element, stmt);
+        addDirectionStmt(element, astFunctions, stmt);
     } else if (stmt instanceof SupportStatement) {
-        addDirectionStmt(element, stmt);
+        addDirectionStmt(element, astFunctions, stmt);
     } else if (stmt instanceof IsNextToStatement) {
-        addIsNextToStmt(element, stmt);
+        addIsNextToStmt(element, astFunctions, stmt);
     } else if (stmt instanceof IfStatement) {
-        addControlFlowStmt(element, stmt, ast);
+        addControlFlowStmt(element, stmt, astFunctions, levelDef);
     } else if (stmt instanceof WhileStatement) {
-        addControlFlowStmt(element, stmt, ast);
+        addControlFlowStmt(element, stmt, astFunctions, levelDef);
     } else if (stmt instanceof NotStatement) {
-        addControlFlowStmt(element, stmt, ast);
+        addControlFlowStmt(element, stmt, astFunctions, levelDef);
     }
 
     return element;
 }
 
-function addDirectionStmt(element: HTMLElement, stmt: MoveStatement | AttackStatement): void {
+function addDirectionStmt(element: HTMLElement, astFunctions: ASTFunctions, stmt: MoveStatement | AttackStatement): void {
     const { character, direction } = stmt;
     element.appendChild(createCharacterIcon(character));
     element.appendChild(createMethod(`: ${stmt.icon()}${DIRECTION_ICONS.get(direction)}`));
+    element.appendChild(createASTManipulationButtons(astFunctions, stmt));
 }
 
-function addIsNextToStmt(element: HTMLElement, stmt: IsNextToStatement): void {
+function addIsNextToStmt(element: HTMLElement, astFunctions: ASTFunctions, stmt: IsNextToStatement): void {
     const { character, direction, interactable } = stmt;
     element.appendChild(createCharacterIcon(character));
     element.appendChild(createMethod(`: ${stmt.icon()}${DIRECTION_ICONS.get(direction)}${INTERACTABLE_ICONS.get(interactable)}`));
+    element.appendChild(createASTManipulationButtons(astFunctions, stmt));
 }
 
-function addControlFlowStmt(element: HTMLElement, stmt: IfStatement | WhileStatement | NotStatement, ast: AST): void {
+const CONDITION_EXLUDES = [StatementExlude.MOVE, StatementExlude.ATTACK, StatementExlude.SUPPORT, StatementExlude.IF, StatementExlude.WHILE];
+function addControlFlowStmt(element: HTMLElement, stmt: IfStatement | WhileStatement | NotStatement, astFunctions: ASTFunctions, levelDef: RenderLevelDef): void {
+    addStyle(element, "padding: 0;");
+    const { notify } = astFunctions;
+
     const controlFlowStmt = createBase();
-    controlFlowStmt.setAttribute("style", controlFlowStmt.getAttribute("style") + `
+    addStyle(controlFlowStmt, `
     display: flex; 
     flex-direction: column; 
     gap: 5px;
     width: 100%;
+    padding: 5px;
     `);
+
+    const maniuplationArea = createASTManipulationButtons(astFunctions, stmt);
+    controlFlowStmt.appendChild(maniuplationArea);
 
     const conditionContainer = document.createElement("div");
     conditionContainer.setAttribute("style", `
@@ -563,30 +674,21 @@ function addControlFlowStmt(element: HTMLElement, stmt: IfStatement | WhileState
     const conditionArea = document.createElement("div");
     conditionArea.setAttribute("style", `
     padding: 5px; 
-    min-height: 50px; 
     background-color: rgba(255, 255, 255, .1); 
     border-radius: 5px;
     width: 100%;
     `);
 
+    const setCondition = (s: UIStatement) => { stmt.condition = s; notify!(); };
     if (stmt.condition) {
-        conditionArea.appendChild(
-            renderInnerLevelStmt(
-                stmt.condition,
-                () => {
-                    stmt.condition = undefined;
-                    ast.notify();
-                },
-                ast
-            )
-        );
+        conditionArea.appendChild(renderStmt(stmt.condition, { pushStmt: setCondition, removeStmt: () => { stmt.condition = undefined; notify!(); }, notify }, levelDef));
     }
-    addStmtDrop(conditionArea, "program", (condition) => {
-        stmt.condition = condition;
-        ast.notify();
-    });
 
     conditionContainer.appendChild(conditionArea);
+
+    const conditionExludes = [...CONDITION_EXLUDES, ...levelDef.exludedStatements];
+    conditionArea.appendChild(createAddStmtButton(setCondition, { exludedStatements: conditionExludes, hasMage: levelDef.hasMage }, !stmt.condition, !stmt.condition ? "~ change" : "+add"));
+
     controlFlowStmt.appendChild(conditionContainer);
 
     if (!(stmt instanceof NotStatement)) {
@@ -596,26 +698,27 @@ function addControlFlowStmt(element: HTMLElement, stmt: IfStatement | WhileState
             min-height: 50px; 
             background-color: rgba(255, 255, 255, .1); 
             border-radius: 5px; 
-            display: flex; 
+            display: flex;
             flex-direction: column; 
             gap: 5px;
             padding-bottom: 15px;
-    `);
-        stmt.body.forEach(s => body.appendChild(
-            renderInnerLevelStmt(
-                s,
-                () => {
-                    stmt.body.splice(stmt.body.indexOf(s), 1);
-                    ast.notify();
-                },
-                ast
-            )
-        )
-        );
-        addStmtDrop(body, "program", (bodyStmt) => {
-            stmt.body.push(bodyStmt);
-            ast.notify();
-        });
+        `);
+        const addToBody = (s: UIStatement) => {
+            stmt.body.push(s);
+            notify!();
+        };
+        const bodyExludes = [...levelDef.exludedStatements ?? [], ...TOP_LEVEL_EXCLUDES];
+        const bodyLevelDef = { exludedStatements: bodyExludes, hasMage: levelDef.hasMage };
+
+        stmt.body.forEach(s => body.appendChild(renderStmt(s, {
+            pushStmt: addToBody,
+            removeStmt: (s2) => {
+                stmt.body.splice(stmt.body.indexOf(s2), 1);
+                notify!();
+            },
+            notify: astFunctions.notify
+        }, bodyLevelDef)));
+        body.appendChild(createAddStmtButton(addToBody, bodyLevelDef, stmt.body.length === 0));
 
         controlFlowStmt.appendChild(body);
     }
@@ -639,6 +742,47 @@ function createMethod(label: string): Element {
     return method;
 }
 
+function createASTManipulationButtons(astFunctions: ASTFunctions, stmt: UIStatement): Element {
+    const container = document.createElement("div");
+    container.setAttribute("style", `
+        display: flex;
+        flex-direction: row;
+        gap: 5px;
+        margin-left: auto;
+    `);
+    if (astFunctions.moveUp) {
+        container.appendChild(createUp(astFunctions.moveUp, stmt));
+    }
+    if (astFunctions.moveDown) {
+        container.appendChild(createDown(astFunctions.moveDown, stmt));
+    }
+    if (astFunctions.removeStmt) {
+        container.appendChild(createDelete(astFunctions.removeStmt, stmt));
+    }
+    return container;
+}
+function createDelete(removeStmt: (stmt: UIStatement) => void, stmt: UIStatement): any {
+    return createASTManipulationButton("🗑️", () => removeStmt(stmt));
+}
+function createUp(moveUp: (stmt: UIStatement) => void, stmt: UIStatement): any {
+    return createASTManipulationButton("🔼", () => moveUp(stmt));
+}
+function createDown(moveDown: (stmt: UIStatement) => void, stmt: UIStatement): any {
+    return createASTManipulationButton("🔽", () => moveDown(stmt));
+}
+function createASTManipulationButton(label: string, onClick: () => void): any {
+    const btn = createBase();
+    btn.textContent = label;
+    addStyle(btn, `
+    cursor: pointer;
+    background-color: #4c4a4a;
+    padding: 5px;
+    `)
+    btn.classList.add("manipulation-btn");
+    btn.onclick = onClick;
+    return btn;
+}
+
 function createBase(): HTMLElement {
     const input = document.createElement("div");
     input.setAttribute("style", `
@@ -649,7 +793,6 @@ function createBase(): HTMLElement {
     font-weight: 500;
     font-family: inherit;
     background-color: #1a1a1a;
-    cursor: move;
     transition: border-color 0.25s;
     `);
     return input;
@@ -665,6 +808,10 @@ function createTabs(levelDef: LevelDefinition, ast: AST): Element {
         tabs.appendChild(createTab(ast, extend));
     }
     return tabs;
+}
+
+function addStyle(element: Element, style: string): void {
+    element.setAttribute("style", element.getAttribute("style") + style);
 }
 
 function createTab(ast: AST, label: string, active: boolean = false): Element {
@@ -685,3 +832,4 @@ function createTab(ast: AST, label: string, active: boolean = false): Element {
     }
     return tab;
 }
+

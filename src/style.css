@@ -222,3 +222,11 @@ dialog {
     opacity: 0;
   }
 }
+
+.manipulation-btn {
+  opacity: 0.2;
+}
+
+.manipulation-btn:hover {
+  opacity: 1;
+}
