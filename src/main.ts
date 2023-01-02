@@ -1,5 +1,5 @@
 import { determineActionCount, Game, GameState } from './game/Game';
-import { render } from './game/Renderer';
+import { clearRenderQueue, render } from './game/Renderer';
 import './style.css';
 import { LevelDefinition, LevelWorld, WORLDS } from './game/Levels';
 import { createEditor as createButtonEditor } from './visualeditor/Editor';
@@ -41,6 +41,7 @@ worldSelector.onclick = toggleWorldSelect;
 const levelLabel = document.getElementById("levelLabel")!;
 const actionCounter = document.getElementById("actionCounter")!;
 const playBtn = document.getElementById("playBtn")!;
+const stopBtn = document.getElementById("stopBtn")!;
 
 let currentWorld = 0;
 let currentLevel = 0;
@@ -84,9 +85,13 @@ function initGame() {
         game!.init();
       }
     } catch (e) {
-      alert(e);
-      game!.init();
+      console.error(e);
     }
+  };
+
+  stopBtn.onclick = () => {
+    clearRenderQueue();
+    game?.init();
   };
 }
 initGame();

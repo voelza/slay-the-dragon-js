@@ -35,7 +35,7 @@ export type DialogRender = {
     body: Element
 }
 
-const renderQueue: any[] = [];
+let renderQueue: any[] = [];
 
 export function queueRender(entry: any): void {
     renderQueue.push(entry);
@@ -55,6 +55,10 @@ export function render(element: Element): void {
             }
         }
     }, 500);
+}
+
+export function clearRenderQueue(): void {
+    renderQueue = [];
 }
 
 function isOnTile(row: number, column: number, position: Position): boolean {
