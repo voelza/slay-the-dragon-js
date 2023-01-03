@@ -220,14 +220,25 @@ export const WORLDS: LevelWorld[] = [
             },
             {
                 level: [
-                    [Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE, Tile.HOLE],
-                    [Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.ROAD, Tile.ROAD, Tile.ROAD],
-                    [Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE, Tile.HOLE],
+                    [Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE],
+                    [Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.ROAD, Tile.ROAD],
+                    [Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE],
                 ],
                 knight: { position: { row: 2, column: 0 } },
                 mage: { position: { row: 0, column: 0 } },
-                dragon: { position: { row: 1, column: 8 }, hp: 2 },
-                actions: 6,
+                dragon: { position: { row: 1, column: 7 }, hp: 2 },
+                actions: 5,
+                exludedStatements: [StatementExlude.IF],
+            },
+            {
+                level: [
+                    [Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD],
+                    [Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.ROAD, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE],
+                ],
+                knight: { position: { row: 0, column: 8 } },
+                mage: { position: { row: 0, column: 0 } },
+                dragon: { position: { row: 1, column: 4 }, hp: 2 },
+                actions: 5,
                 exludedStatements: [StatementExlude.IF],
             }
         ]
