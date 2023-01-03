@@ -806,7 +806,7 @@ function addControlFlowStmt(element: HTMLElement, stmt: IfStatement | WhileState
 }
 
 function renderCondition(levelDef: RenderLevelDef, stmt: IfStatement | WhileStatement): Element {
-    let isNot: boolean = false;
+    let isNot: boolean = stmt instanceof NotStatement;
     let character: Character = globalCharacter;
     let currentDirection: Direction = globalCurrentDirection;
     let currentInteractable: Interactable = globalInteractable;
@@ -843,7 +843,7 @@ function renderCondition(levelDef: RenderLevelDef, stmt: IfStatement | WhileStat
 
     const isNotToggle = createBase();
     addStyle(isNotToggle, "cursor: pointer;");
-    isNotToggle.textContent = " is next to ";
+    isNotToggle.textContent = isNot ? " is not next to " : " is next to ";
     if (!levelDef.exludedStatements.includes(StatementExlude.NOT)) {
         isNotToggle.setAttribute("title", "Click to negate statement");
         isNotToggle.onclick = () => {
