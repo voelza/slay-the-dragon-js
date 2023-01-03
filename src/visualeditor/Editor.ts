@@ -806,10 +806,20 @@ function addControlFlowStmt(element: HTMLElement, stmt: IfStatement | WhileState
 }
 
 function renderCondition(levelDef: RenderLevelDef, stmt: IfStatement | WhileStatement): Element {
-    let isNot: boolean = stmt instanceof NotStatement;
-    let character: Character = globalCharacter;
-    let currentDirection: Direction = globalCurrentDirection;
-    let currentInteractable: Interactable = globalInteractable;
+    let isNot: boolean = stmt.condition instanceof NotStatement;
+
+    let currentCondition: IsNextToStatement | undefined;
+    if (stmt.condition) {
+        if (stmt.condition instanceof NotStatement) {
+            currentCondition = stmt.condition.condition as IsNextToStatement;
+        } else {
+            currentCondition = stmt.condition as IsNextToStatement;
+        }
+    }
+
+    let character: Character = currentCondition?.character ?? globalCharacter;
+    let currentDirection: Direction = currentCondition?.direction ?? globalCurrentDirection;
+    let currentInteractable: Interactable = currentCondition?.interactable ?? globalInteractable;
 
     const updateCondition = () => {
         stmt.condition = new IsNextToStatement(character, currentDirection, currentInteractable);

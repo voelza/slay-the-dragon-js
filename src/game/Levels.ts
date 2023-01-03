@@ -189,22 +189,46 @@ export const WORLDS: LevelWorld[] = [
         ]
     },
     {
-        name: "#4: If I had only known...",
+        name: "#4: It's dangerous to go alone...",
         color: "#3a3e3e",
         levels: [
             {
                 level: [
-                    [Tile.HOLE, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE],
-                    [Tile.ROAD, Tile.ROAD, Tile.HOLE, Tile.ROAD, Tile.HOLE, Tile.ROAD, Tile.ROAD, Tile.ROAD],
-                    [Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE, Tile.HOLE],
-
+                    [Tile.HOLE, Tile.ROAD, Tile.HOLE],
+                    [Tile.HOLE, Tile.ROAD, Tile.HOLE],
+                    [Tile.ROAD, Tile.ROAD, Tile.ROAD],
                 ],
-                knight: { position: { row: 1, column: 0 } },
-                dragon: { position: { row: 1, column: 7 }, hp: 1 },
+                knight: { position: { row: 2, column: 0 } },
+                mage: { position: { row: 0, column: 1 } },
+                dragon: { position: { row: 2, column: 2 }, hp: 2 },
                 actions: 4,
+                exludedStatements: [StatementExlude.IF],
                 help: `
-                
+                It's dangerous to go alone. Take this... support from
+                your new friend: THE MAGE.
+
+                Just as the knight, the mage can use the 'move' action,
+                but he cannot attack! All he can do is  use a spell to
+                'support' the knight to give him one more attack point.
+
+                To do so position the mage next to the knight and use
+                his 'support' spell!
+
+                To change which characters the actions belong to,
+                click on the knight/mage character icons.
                 `
+            },
+            {
+                level: [
+                    [Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE, Tile.HOLE],
+                    [Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.ROAD, Tile.ROAD, Tile.ROAD],
+                    [Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE, Tile.HOLE],
+                ],
+                knight: { position: { row: 2, column: 0 } },
+                mage: { position: { row: 0, column: 0 } },
+                dragon: { position: { row: 1, column: 8 }, hp: 2 },
+                actions: 6,
+                exludedStatements: [StatementExlude.IF],
             }
         ]
     },
@@ -282,17 +306,6 @@ export const WORLDS: LevelWorld[] = [
                 }
                 win();
                 `
-            },
-            {
-                level: [
-                    [Tile.HOLE, Tile.ROAD, Tile.HOLE],
-                    [Tile.HOLE, Tile.ROAD, Tile.HOLE],
-                    [Tile.ROAD, Tile.ROAD, Tile.ROAD],
-                ],
-                knight: { position: { row: 2, column: 0 } },
-                mage: { position: { row: 0, column: 1 } },
-                dragon: { position: { row: 2, column: 2 }, hp: 2 },
-                actions: 4,
             },
             {
                 level: [
