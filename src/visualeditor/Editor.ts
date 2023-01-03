@@ -513,6 +513,12 @@ function createDirectionSelector(callback: (direction: Direction) => void): Elem
     return btn;
 }
 
+/*
+    TODOs:
+    - Closing nach jedem Auswählen SUCKS
+    - Wenn man scrollt, dann geht es nicht mit den overlays
+*/
+
 function createInteractableSelector(callback: (interactable: Interactable) => void): Element {
     const btn = createBase();
     addStyle(btn, "width: fit-content;  cursor: pointer;");
@@ -693,22 +699,53 @@ function addControlFlowStmt(element: HTMLElement, stmt: IfStatement | WhileState
             gap: 5px;
             padding-bottom: 15px;
         `);
-        const addToBody = (s: UIStatement) => {
-            stmt.body.push(s);
-            notify!();
-        };
+
         const bodyExludes = [...levelDef.exludedStatements ?? [], ...TOP_LEVEL_EXCLUDES];
         const bodyLevelDef = { exludedStatements: bodyExludes, hasMage: levelDef.hasMage };
 
-        stmt.body.forEach(s => body.appendChild(renderStmt(s, {
-            pushStmt: addToBody,
-            removeStmt: (s2) => {
-                stmt.body.splice(stmt.body.indexOf(s2), 1);
-                notify!();
-            },
-            notify: astFunctions.notify
-        }, bodyLevelDef)));
-        body.appendChild(createAddStmtButton(addToBody, bodyLevelDef, stmt.body.length === 0));
+        const addToBody = (s: UIStatement) => {
+            stmt.body.push(s);
+            renderBody();
+        };
+        const renderBody = () => {
+            body.innerHTML = "";
+            stmt.body.forEach(s => body.appendChild(renderStmt(s, {
+                pushStmt: addToBody,
+                removeStmt: (s2) => {
+                    stmt.body.splice(stmt.body.indexOf(s2), 1);
+                    renderBody();
+                },
+                moveDown: (s2) => {
+                    const currentIndex = stmt.body.indexOf(s2);
+                    if (currentIndex === stmt.body.length - 1) {
+                        return;
+                    }
+
+                    if (currentIndex !== -1) {
+                        stmt.body.splice(currentIndex, 1);
+                        stmt.body.splice(currentIndex + 1, 0, s2);
+                    }
+                    renderBody();
+                },
+                moveUp: (s2) => {
+                    const currentIndex = stmt.body.indexOf(s2);
+                    if (currentIndex === 0) {
+                        return;
+                    }
+
+                    if (currentIndex !== -1) {
+                        stmt.body.splice(currentIndex, 1);
+                        stmt.body.splice(currentIndex - 1, 0, s2);
+                    }
+                    renderBody();
+                },
+                notify: renderBody
+            }, bodyLevelDef)));
+            body.appendChild(createAddStmtButton(addToBody, bodyLevelDef, stmt.body.length === 0));
+        }
+
+
+        renderBody();
 
         controlFlowStmt.appendChild(body);
     }
