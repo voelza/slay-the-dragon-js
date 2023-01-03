@@ -38,115 +38,115 @@ export type LevelWorld = {
 }
 
 export const WORLDS: LevelWorld[] = [
-    {
-        name: "#1: Walk in the park...",
-        color: "#3b3c3c",
-        levels: [
-            {
-                level: [
-                    [Tile.ROAD, Tile.ROAD, Tile.ROAD],
-                ],
-                knight: { position: { row: 0, column: 0 } },
-                dragon: { position: { row: 0, column: 2 }, hp: 1 },
-                actions: 2,
-                exludedStatements: [StatementExlude.IS_NEXT_TO, StatementExlude.IF, StatementExlude.WHILE, StatementExlude.NOT],
-            },
-            {
-                level: [
-                    [Tile.HOLE, Tile.ROAD, Tile.ROAD],
-                    [Tile.ROAD, Tile.ROAD, Tile.HOLE],
-                ],
-                knight: { position: { row: 1, column: 0 } },
-                dragon: { position: { row: 0, column: 2 }, hp: 1 },
-                actions: 3,
-                exludedStatements: [StatementExlude.IS_NEXT_TO, StatementExlude.IF, StatementExlude.WHILE, StatementExlude.NOT],
-            },
-            {
-                level: [
-                    [Tile.HOLE, Tile.ROAD, Tile.ROAD],
-                    [Tile.HOLE, Tile.ROAD, Tile.HOLE],
-                    [Tile.HOLE, Tile.ROAD, Tile.HOLE],
-                    [Tile.ROAD, Tile.ROAD, Tile.HOLE],
-                ],
-                knight: { position: { row: 0, column: 2 } },
-                dragon: { position: { row: 3, column: 0 }, hp: 1 },
-                actions: 5,
-                exludedStatements: [StatementExlude.IS_NEXT_TO, StatementExlude.IF, StatementExlude.WHILE, StatementExlude.NOT],
-            },
-            {
-                level: [
-                    [Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL],
-                    [Tile.WALL, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.WALL],
-                    [Tile.WALL, Tile.ROAD, Tile.HOLE, Tile.HOLE, Tile.WALL],
-                    [Tile.WALL, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.WALL],
-                    [Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL],
-                ],
-                knight: { position: { row: 1, column: 3 } },
-                dragon: { position: { row: 3, column: 3 }, hp: 1 },
-                actions: 6,
-                exludedStatements: [StatementExlude.IS_NEXT_TO, StatementExlude.IF, StatementExlude.WHILE, StatementExlude.NOT],
-            },
-            {
-                level: [
-                    [Tile.HOLE, Tile.HOLE, Tile.WALL, Tile.WALL, Tile.ROAD, Tile.ROAD],
-                    [Tile.WALL, Tile.WALL, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE],
-                    [Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE, Tile.HOLE, Tile.HOLE]
-                ],
-                knight: { position: { row: 2, column: 0 } },
-                dragon: { position: { row: 0, column: 5 }, hp: 1 },
-                actions: 7,
-                exludedStatements: [StatementExlude.IS_NEXT_TO, StatementExlude.IF, StatementExlude.WHILE, StatementExlude.NOT],
-            },
-        ]
-    },
-    {
-        name: "#2: While we are at it...",
-        color: "#3a3e3e",
-        levels: [
-            {
-                level: [
-                    [Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.HOLE, Tile.HOLE],
-                    [Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD],
-                    [Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.HOLE, Tile.HOLE],
+    // {
+    //     name: "#1: Walk in the park...",
+    //     color: "#3b3c3c",
+    //     levels: [
+    //         {
+    //             level: [
+    //                 [Tile.ROAD, Tile.ROAD, Tile.ROAD],
+    //             ],
+    //             knight: { position: { row: 0, column: 0 } },
+    //             dragon: { position: { row: 0, column: 2 }, hp: 1 },
+    //             actions: 2,
+    //             exludedStatements: [StatementExlude.IS_NEXT_TO, StatementExlude.IF, StatementExlude.WHILE, StatementExlude.NOT],
+    //         },
+    //         {
+    //             level: [
+    //                 [Tile.HOLE, Tile.ROAD, Tile.ROAD],
+    //                 [Tile.ROAD, Tile.ROAD, Tile.HOLE],
+    //             ],
+    //             knight: { position: { row: 1, column: 0 } },
+    //             dragon: { position: { row: 0, column: 2 }, hp: 1 },
+    //             actions: 3,
+    //             exludedStatements: [StatementExlude.IS_NEXT_TO, StatementExlude.IF, StatementExlude.WHILE, StatementExlude.NOT],
+    //         },
+    //         {
+    //             level: [
+    //                 [Tile.HOLE, Tile.ROAD, Tile.ROAD],
+    //                 [Tile.HOLE, Tile.ROAD, Tile.HOLE],
+    //                 [Tile.HOLE, Tile.ROAD, Tile.HOLE],
+    //                 [Tile.ROAD, Tile.ROAD, Tile.HOLE],
+    //             ],
+    //             knight: { position: { row: 0, column: 2 } },
+    //             dragon: { position: { row: 3, column: 0 }, hp: 1 },
+    //             actions: 5,
+    //             exludedStatements: [StatementExlude.IS_NEXT_TO, StatementExlude.IF, StatementExlude.WHILE, StatementExlude.NOT],
+    //         },
+    //         {
+    //             level: [
+    //                 [Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL],
+    //                 [Tile.WALL, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.WALL],
+    //                 [Tile.WALL, Tile.ROAD, Tile.HOLE, Tile.HOLE, Tile.WALL],
+    //                 [Tile.WALL, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.WALL],
+    //                 [Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL],
+    //             ],
+    //             knight: { position: { row: 1, column: 3 } },
+    //             dragon: { position: { row: 3, column: 3 }, hp: 1 },
+    //             actions: 6,
+    //             exludedStatements: [StatementExlude.IS_NEXT_TO, StatementExlude.IF, StatementExlude.WHILE, StatementExlude.NOT],
+    //         },
+    //         {
+    //             level: [
+    //                 [Tile.HOLE, Tile.HOLE, Tile.WALL, Tile.WALL, Tile.ROAD, Tile.ROAD],
+    //                 [Tile.WALL, Tile.WALL, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE],
+    //                 [Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE, Tile.HOLE, Tile.HOLE]
+    //             ],
+    //             knight: { position: { row: 2, column: 0 } },
+    //             dragon: { position: { row: 0, column: 5 }, hp: 1 },
+    //             actions: 7,
+    //             exludedStatements: [StatementExlude.IS_NEXT_TO, StatementExlude.IF, StatementExlude.WHILE, StatementExlude.NOT],
+    //         },
+    //     ]
+    // },
+    // {
+    //     name: "#2: While we are at it...",
+    //     color: "#3a3e3e",
+    //     levels: [
+    //         {
+    //             level: [
+    //                 [Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.HOLE, Tile.HOLE],
+    //                 [Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD],
+    //                 [Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.HOLE, Tile.HOLE],
 
-                ],
-                knight: { position: { row: 1, column: 0 } },
-                dragon: { position: { row: 1, column: 7 }, hp: 1 },
-                actions: 2,
-                exludedStatements: [StatementExlude.IF, StatementExlude.NOT],
-                help: `Use: 'WHILE' and '🔍 isNextTo' to repeat a certain set of actions until the condition is no longer 'true'.`
-            },
-            {
-                level: [
-                    [Tile.HOLE, Tile.HOLE, Tile.WALL, Tile.WALL, Tile.ROAD, Tile.ROAD],
-                    [Tile.WALL, Tile.WALL, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE],
-                    [Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE, Tile.HOLE, Tile.HOLE]
+    //             ],
+    //             knight: { position: { row: 1, column: 0 } },
+    //             dragon: { position: { row: 1, column: 7 }, hp: 1 },
+    //             actions: 2,
+    //             exludedStatements: [StatementExlude.IF, StatementExlude.NOT],
+    //             help: `Use: 'WHILE' and '🔍 isNextTo' to repeat a certain set of actions until the condition is no longer 'true'.`
+    //         },
+    //         {
+    //             level: [
+    //                 [Tile.HOLE, Tile.HOLE, Tile.WALL, Tile.WALL, Tile.ROAD, Tile.ROAD],
+    //                 [Tile.WALL, Tile.WALL, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE],
+    //                 [Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE, Tile.HOLE, Tile.HOLE]
 
-                ],
-                knight: { position: { row: 2, column: 0 } },
-                dragon: { position: { row: 0, column: 5 }, hp: 1 },
-                actions: 4,
-                exludedStatements: [StatementExlude.IF, StatementExlude.NOT],
-            },
-            {
-                level: [
-                    [Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL],
-                    [Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD],
-                    [Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.ROAD],
-                    [Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.ROAD],
-                    [Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.ROAD],
-                    [Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.ROAD],
-                    [Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.ROAD],
-                    [Tile.HOLE, Tile.HOLE, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.ROAD],
-                    [Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD],
-                ],
-                knight: { position: { row: 1, column: 0 } },
-                dragon: { position: { row: 8, column: 0 }, hp: 1 },
-                actions: 5,
-                exludedStatements: [StatementExlude.IF, StatementExlude.NOT],
-            }
-        ]
-    },
+    //             ],
+    //             knight: { position: { row: 2, column: 0 } },
+    //             dragon: { position: { row: 0, column: 5 }, hp: 1 },
+    //             actions: 4,
+    //             exludedStatements: [StatementExlude.IF, StatementExlude.NOT],
+    //         },
+    //         {
+    //             level: [
+    //                 [Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL],
+    //                 [Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD],
+    //                 [Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.ROAD],
+    //                 [Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.ROAD],
+    //                 [Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.ROAD],
+    //                 [Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.ROAD],
+    //                 [Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.ROAD],
+    //                 [Tile.HOLE, Tile.HOLE, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.WALL, Tile.ROAD],
+    //                 [Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD],
+    //             ],
+    //             knight: { position: { row: 1, column: 0 } },
+    //             dragon: { position: { row: 8, column: 0 }, hp: 1 },
+    //             actions: 5,
+    //             exludedStatements: [StatementExlude.IF, StatementExlude.NOT],
+    //         }
+    //     ]
+    // },
     {
         name: "??: More ideas...",
         color: "#282828",

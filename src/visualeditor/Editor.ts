@@ -258,6 +258,31 @@ type RenderLevelDef = {
     hasMage?: boolean
 }
 
+type ScrollObserver = (scrollTop: number) => void;
+
+class ObservableScrollArea {
+    element: Element;
+    observer: ScrollObserver[];
+    constructor(element: Element) {
+        this.element = element;
+        this.observer = [];
+
+        this.element.addEventListener("scroll", () => {
+            this.observer.forEach(o => o(this.element.scrollTop));
+        });
+    }
+
+    addObserver(observer: ScrollObserver): void {
+        this.observer.push(observer);
+    }
+
+    removeObserver(observer: ScrollObserver): void {
+        this.observer.splice(this.observer.indexOf(observer), 1);
+    }
+
+}
+
+let vsInputObserver: ObservableScrollArea | undefined;
 export function createEditor(element: Element, levelDef: LevelDefinition, stateObserver: () => void): [CodeGetter, Resetter] {
     element.innerHTML = "";
 
@@ -274,6 +299,7 @@ export function createEditor(element: Element, levelDef: LevelDefinition, stateO
     vsEditor.appendChild(tabs);
 
     const vsInput = createVSInput();
+    vsInputObserver = new ObservableScrollArea(vsInput);
     vsEditor.appendChild(vsInput);
     renderProgram(vsInput, levelDef, ast);
 
@@ -501,13 +527,21 @@ function createDirectionSelector(callback: (direction: Direction) => void): Elem
     addStyle(south, "margin: auto;");
     directionSelector.appendChild(south);
 
+    const orgStyling = directionSelector.getAttribute("style");
+    const updatePosition = (scrollTop: number) => {
+        directionSelector.setAttribute("style", `${orgStyling}top: ${directionSelector.parentElement!.offsetTop - scrollTop + 30}px;`);
+    };
+
     let overlayVisible = false;
     btn.onclick = () => {
         overlayVisible = !overlayVisible;
         if (overlayVisible) {
             btn.appendChild(directionSelector);
+            updatePosition(vsInputObserver!.element.scrollTop);
+            vsInputObserver!.addObserver(updatePosition);
         } else {
             directionSelector.remove();
+            vsInputObserver?.removeObserver(updatePosition);
         }
     }
     return btn;
@@ -516,7 +550,6 @@ function createDirectionSelector(callback: (direction: Direction) => void): Elem
 /*
     TODOs:
     - Closing nach jedem Auswählen SUCKS
-    - Wenn man scrollt, dann geht es nicht mit den overlays
 */
 
 function createInteractableSelector(callback: (interactable: Interactable) => void): Element {
@@ -556,14 +589,21 @@ function createInteractableSelector(callback: (interactable: Interactable) => vo
     for (const inter of ALL_INTERACTABLES) {
         interactableSelector.appendChild(createInteractableSelect(inter));
     }
+    const orgStyling = interactableSelector.getAttribute("style");
+    const updatePosition = (scrollTop: number) => {
+        interactableSelector.setAttribute("style", `${orgStyling}top: ${interactableSelector.parentElement!.offsetTop - scrollTop + 30}px;`);
+    };
 
     let overlayVisible = false;
     btn.onclick = () => {
         overlayVisible = !overlayVisible;
         if (overlayVisible) {
             btn.appendChild(interactableSelector);
+            updatePosition(vsInputObserver!.element.scrollTop);
+            vsInputObserver!.addObserver(updatePosition);
         } else {
             interactableSelector.remove();
+            vsInputObserver?.removeObserver(updatePosition);
         }
     }
     return btn;
@@ -608,13 +648,21 @@ function createCharacterSelector(callback: (character: Character) => void, withC
     characterSelector.appendChild(createCharacterSelect("knight"));
     characterSelector.appendChild(createCharacterSelect("mage"));
 
+    const orgStyling = characterSelector.getAttribute("style");
+    const updatePosition = (scrollTop: number) => {
+        characterSelector.setAttribute("style", `${orgStyling}top: ${characterSelector.parentElement!.offsetTop - scrollTop + 30}px;`);
+    };
+
     let overlayVisible = false;
     btn.onclick = () => {
         overlayVisible = !overlayVisible;
         if (overlayVisible) {
             btn.appendChild(characterSelector);
+            updatePosition(vsInputObserver!.element.scrollTop);
+            vsInputObserver!.addObserver(updatePosition);
         } else {
             characterSelector.remove();
+            vsInputObserver?.removeObserver(updatePosition);
         }
     }
     return btn;
@@ -648,7 +696,6 @@ function addDirectionStmt(element: HTMLElement, astFunctions: ASTFunctions, stmt
 
 function addControlFlowStmt(element: HTMLElement, stmt: IfStatement | WhileStatement, astFunctions: ASTFunctions, levelDef: RenderLevelDef): void {
     addStyle(element, "padding: 0;");
-    const { notify } = astFunctions;
 
     const controlFlowStmt = createBase();
     addStyle(controlFlowStmt, `
@@ -780,6 +827,7 @@ function renderCondition(levelDef: RenderLevelDef, stmt: IfStatement | WhileStat
     }, true);
     if (!levelDef.hasMage) {
         characterSelector.onclick = () => { };
+        addStyle(characterSelector, "cursor: default;");
     }
     element.appendChild(characterSelector);
     element.appendChild(createDirectionSelector((d) => {
