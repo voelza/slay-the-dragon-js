@@ -93,9 +93,11 @@ class IsNextToStatement implements UIStatement {
 
 class NotStatement implements UIStatement {
     condition: UIStatement | undefined;
+    openState: AddState;
 
     constructor(condition: UIStatement | undefined = undefined) {
         this.condition = condition;
+        this.openState = { isOpen: false };
     }
     toCode(): string {
         return `not ${this.condition?.toCode()}`;
@@ -108,10 +110,12 @@ class NotStatement implements UIStatement {
 class IfStatement implements UIStatement {
     condition: UIStatement | undefined;
     body: UIStatement[];
+    openState: AddState;
 
     constructor(condition: NotStatement | IsNextToStatement | undefined = undefined, body: UIStatement[] = []) {
         this.condition = condition;
         this.body = body;
+        this.openState = { isOpen: false };
     }
     toCode(): string {
         return `if(${this.condition?.toCode().replaceAll(";", "")}){${this.body.map(s => s.toCode()).join("")}}`
@@ -124,10 +128,12 @@ class IfStatement implements UIStatement {
 class WhileStatement implements UIStatement {
     condition: UIStatement | undefined;
     body: UIStatement[];
+    openState: AddState;
 
     constructor(condition: NotStatement | IsNextToStatement | undefined = undefined, body: UIStatement[] = []) {
         this.condition = condition;
         this.body = body;
+        this.openState = { isOpen: false };
     }
     toCode(): string {
         return `while(${this.condition?.toCode().replaceAll(";", "")}){${this.body.map(s => s.toCode()).join("")}}`
@@ -329,7 +335,12 @@ function createVSInput(): Element {
     return vsInput;
 }
 
+type AddState = {
+    isOpen: boolean;
+}
+
 const TOP_LEVEL_EXCLUDES: StatementExlude[] = [StatementExlude.IS_NEXT_TO, StatementExlude.NOT];
+let topLevelAddState: AddState = { isOpen: false };
 function renderProgram(element: Element, levelDef: LevelDefinition, ast: AST): void {
     element.innerHTML = "";
     for (const stmt of ast.ast) {
@@ -339,12 +350,12 @@ function renderProgram(element: Element, levelDef: LevelDefinition, ast: AST): v
         createAddStmtButton(
             ast.push.bind(ast),
             { exludedStatements: [...levelDef.exludedStatements ?? [], ...TOP_LEVEL_EXCLUDES], hasMage: levelDef.mage !== undefined },
-            false
+            topLevelAddState
         )
     );
 }
 
-function createAddStmtButton(pushStmt: (stmt: UIStatement) => void, levelDef: RenderLevelDef, stmtsVisible: boolean, labelStr: string = "+ add"): Element {
+function createAddStmtButton(pushStmt: (stmt: UIStatement) => void, levelDef: RenderLevelDef, state: AddState): Element {
     const addBtn = createBase();
     addStyle(addBtn, `
     text-align: center; 
@@ -356,19 +367,19 @@ function createAddStmtButton(pushStmt: (stmt: UIStatement) => void, levelDef: Re
 
     const label = document.createElement("div");
     label.setAttribute("style", "cursor: pointer;");
-    label.textContent = labelStr;
+    label.textContent = "+ add";
     addBtn.appendChild(label);
 
     const stms = createStmts(levelDef, pushStmt);
-    if (stmtsVisible) {
+    if (state.isOpen) {
         addBtn.appendChild(stms);
     } else {
         stms.remove();
     }
 
     label.onclick = () => {
-        stmtsVisible = !stmtsVisible;
-        if (stmtsVisible) {
+        state.isOpen = !state.isOpen;
+        if (state.isOpen) {
             addBtn.appendChild(stms);
         } else {
             stms.remove();
@@ -546,11 +557,6 @@ function createDirectionSelector(callback: (direction: Direction) => void): Elem
     }
     return btn;
 }
-
-/*
-    TODOs:
-    - Closing nach jedem Auswählen SUCKS
-*/
 
 function createInteractableSelector(callback: (interactable: Interactable) => void): Element {
     const btn = createBase();
@@ -788,7 +794,7 @@ function addControlFlowStmt(element: HTMLElement, stmt: IfStatement | WhileState
                 },
                 notify: renderBody
             }, bodyLevelDef)));
-            body.appendChild(createAddStmtButton(addToBody, bodyLevelDef, stmt.body.length === 0));
+            body.appendChild(createAddStmtButton(addToBody, bodyLevelDef, stmt.openState));
         }
 
 
