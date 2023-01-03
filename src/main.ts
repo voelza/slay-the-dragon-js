@@ -38,6 +38,35 @@ const toggleWorldSelect = () => {
 };
 worldSelector.onclick = toggleWorldSelect;
 
+const helpBtn = document.getElementById("helpBtn")!;
+helpBtn.addEventListener("click", () => {
+  const dialog = document.createElement("dialog");
+  dialog.setAttribute("open", "");
+
+  const txt = document.createElement("pre");
+  txt.textContent = currentDef?.help ?? "You are on your own, buddy. Sorry.";
+
+  const form = document.createElement("form");
+  form.setAttribute("method", "dialog");
+  const tryAgain = document.createElement("button");
+  tryAgain.textContent = "OK";
+
+  form.appendChild(tryAgain);
+  dialog.appendChild(txt);
+  dialog.appendChild(form);
+  document.body.appendChild(dialog);
+
+  dialog.addEventListener('close', () => dialog.remove());
+});
+const addHelpAnimation = () => {
+  if (currentDef?.help) {
+    helpBtn.classList.add("glow");
+  } else {
+    helpBtn.classList.remove("glow");
+  }
+}
+
+// GAME START
 const levelLabel = document.getElementById("levelLabel")!;
 const actionCounter = document.getElementById("actionCounter")!;
 const playBtn = document.getElementById("playBtn")!;
@@ -63,6 +92,7 @@ function initGame() {
     updateActionsLabel
   );
   updateActionsLabel();
+  addHelpAnimation();
 
   playBtn.onclick = () => {
     const code = codeGetter();
@@ -97,26 +127,6 @@ function initGame() {
 initGame();
 render(levelContainer);
 
-const helpBtn = document.getElementById("helpBtn")!;
-helpBtn.addEventListener("click", () => {
-  const dialog = document.createElement("dialog");
-  dialog.setAttribute("open", "");
-
-  const txt = document.createElement("pre");
-  txt.textContent = currentDef?.help ?? "You are on your own, buddy. Sorry.";
-
-  const form = document.createElement("form");
-  form.setAttribute("method", "dialog");
-  const tryAgain = document.createElement("button");
-  tryAgain.textContent = "OK";
-
-  form.appendChild(tryAgain);
-  dialog.appendChild(txt);
-  dialog.appendChild(form);
-  document.body.appendChild(dialog);
-
-  dialog.addEventListener('close', () => dialog.remove());
-});
 
 
 for (let w = 0; w < WORLDS.length; w++) {

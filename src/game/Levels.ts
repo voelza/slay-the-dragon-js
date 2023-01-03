@@ -50,6 +50,16 @@ export const WORLDS: LevelWorld[] = [
                 dragon: { position: { row: 0, column: 2 }, hp: 1 },
                 actions: 2,
                 exludedStatements: [StatementExlude.IS_NEXT_TO, StatementExlude.IF, StatementExlude.WHILE, StatementExlude.NOT],
+                help: `
+                Your task is to slay the dragon!
+                To do so use the 'attack' action. But first you have to get the knight next to it
+                by using the 'move' action.
+
+                Beware: You only have a certain amount of actions before the dragon wakes up and
+                burns you. Each 'attack' and 'move' count as 1 actions. 
+
+                In this level you have 2 actions to spend.
+                `
             },
             {
                 level: [
@@ -114,7 +124,14 @@ export const WORLDS: LevelWorld[] = [
                 dragon: { position: { row: 1, column: 7 }, hp: 1 },
                 actions: 2,
                 exludedStatements: [StatementExlude.IF, StatementExlude.NOT],
-                help: `Use: 'WHILE' and '🔍 isNextTo' to repeat a certain set of actions until the condition is no longer 'true'.`
+                help: `
+                Use: 'WHILE' to repeat a certain set of actions.
+                The actions are repeated as long as the condition 
+                of 'WHILE' is considered to be true.
+
+                For example: 
+                '⬆️ is next to 🐉' will be true as long as the.
+                `
             },
             {
                 level: [
@@ -144,6 +161,50 @@ export const WORLDS: LevelWorld[] = [
                 dragon: { position: { row: 8, column: 0 }, hp: 1 },
                 actions: 5,
                 exludedStatements: [StatementExlude.IF, StatementExlude.NOT],
+            }
+        ]
+    },
+    {
+        name: "#3: Don't be so negative...",
+        color: "#3a3e3e",
+        levels: [
+            {
+                level: [
+                    [Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.ROAD],
+
+                ],
+                knight: { position: { row: 0, column: 0 } },
+                dragon: { position: { row: 0, column: 7 }, hp: 1 },
+                actions: 2,
+                exludedStatements: [StatementExlude.IF],
+                help: `
+                Sometimes you will need to be more negative and 
+                check a condition that is not 'true' but 'false'.
+
+                In this case you can change 'is next to' to 
+                'is not next to' by clicking on the 
+                'is next to' button.
+                `
+            }
+        ]
+    },
+    {
+        name: "#4: If I had only known...",
+        color: "#3a3e3e",
+        levels: [
+            {
+                level: [
+                    [Tile.HOLE, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.HOLE],
+                    [Tile.ROAD, Tile.ROAD, Tile.HOLE, Tile.ROAD, Tile.HOLE, Tile.ROAD, Tile.ROAD, Tile.ROAD],
+                    [Tile.HOLE, Tile.HOLE, Tile.HOLE, Tile.ROAD, Tile.ROAD, Tile.ROAD, Tile.HOLE, Tile.HOLE],
+
+                ],
+                knight: { position: { row: 1, column: 0 } },
+                dragon: { position: { row: 1, column: 7 }, hp: 1 },
+                actions: 4,
+                help: `
+                
+                `
             }
         ]
     },

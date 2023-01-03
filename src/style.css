@@ -293,3 +293,18 @@ input:checked+.slider:before {
 .slider.round:before {
   border-radius: 50%;
 }
+
+.glow {
+  animation: glow 3s infinite alternate;
+  animation-delay: 10s;
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 10px -5px #c2b11c;
+  }
+
+  to {
+    box-shadow: 0 0 10px 5px #c2b11c;
+  }
+}
