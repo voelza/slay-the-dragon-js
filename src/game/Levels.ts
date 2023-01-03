@@ -50,15 +50,14 @@ export const WORLDS: LevelWorld[] = [
                 dragon: { position: { row: 0, column: 2 }, hp: 1 },
                 actions: 2,
                 exludedStatements: [StatementExlude.IS_NEXT_TO, StatementExlude.IF, StatementExlude.WHILE, StatementExlude.NOT],
-                help: `
-                Your task is to slay the dragon!
-                To do so use the 'attack' action. But first you have to get the knight next to it
-                by using the 'move' action.
+                help: `Your task is to slay the dragon!
+To do so use the 'attack' action. But first you have to get the knight next to it
+by using the 'move' action.
 
-                Beware: You only have a certain amount of actions before the dragon wakes up and
-                burns you. Each 'attack' and 'move' count as 1 actions. 
+Beware: You only have a certain amount of actions before the dragon wakes up and
+burns you. Each 'attack' and 'move' count as 1 actions. 
 
-                In this level you have 2 actions to spend.
+In this level you have 2 actions to spend.
                 `
             },
             {
@@ -124,14 +123,12 @@ export const WORLDS: LevelWorld[] = [
                 dragon: { position: { row: 1, column: 7 }, hp: 1 },
                 actions: 2,
                 exludedStatements: [StatementExlude.IF, StatementExlude.NOT],
-                help: `
-                Use: 'WHILE' to repeat a certain set of actions.
-                The actions are repeated as long as the condition 
-                of 'WHILE' is considered to be true.
+                help: `Use: 'WHILE' to repeat a certain set of actions.
+The actions are repeated as long as the condition 
+of 'WHILE' is considered to be true.
 
-                For example: 
-                '⬆️ is next to 🐉' will be true as long as the.
-                `
+For example:
+'⬆️ is next to 🐉' will be true as long as to the NORTH of the knight there is the dragon.`
             },
             {
                 level: [
@@ -177,13 +174,11 @@ export const WORLDS: LevelWorld[] = [
                 dragon: { position: { row: 0, column: 7 }, hp: 1 },
                 actions: 2,
                 exludedStatements: [StatementExlude.IF],
-                help: `
-                Sometimes you will need to be more negative and 
-                check a condition that is not 'true' but 'false'.
+                help: `Sometimes you will need to be more negative and 
+check a condition that is not 'true' but 'false'.
 
-                In this case you can change 'is next to' to 
-                'is not next to' by clicking on the 
-                'is next to' button.
+In this case you can change 'is next to' to 
+'is not next to' by clicking on the 'is next to' button.
                 `
             }
         ]
@@ -203,19 +198,18 @@ export const WORLDS: LevelWorld[] = [
                 dragon: { position: { row: 2, column: 2 }, hp: 2 },
                 actions: 4,
                 exludedStatements: [StatementExlude.IF],
-                help: `
-                It's dangerous to go alone. Take this... support from
-                your new friend: THE MAGE.
+                help: `It's dangerous to go alone. Take this... support from
+your new friend: THE MAGE.
 
-                Just as the knight, the mage can use the 'move' action,
-                but he cannot attack! All he can do is  use a spell to
-                'support' the knight to give him one more attack point.
+Just as the knight, the mage can use the 'move' action,
+but he cannot attack! All he can do is  use a spell to
+'support' the knight to give him one more attack point.
 
-                To do so position the mage next to the knight and use
-                his 'support' spell!
+To do so position the mage next to the knight and use
+his 'support' spell!
 
-                To change which characters the actions belong to,
-                click on the knight/mage character icons.
+To change which characters the actions belong to,
+click on the knight/mage character icons.
                 `
             },
             {
