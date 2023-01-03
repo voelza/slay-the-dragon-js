@@ -489,7 +489,7 @@ function createControlItem(controlItem: ControlItem): Element {
 
 function createDirectionSelector(callback: (direction: Direction) => void): Element {
     const btn = createBase();
-    addStyle(btn, "width: fit-content; cursor: pointer;");
+    addStyle(btn, "width: fit-content; cursor: pointer; background-color: gray; padding: 5px; border-radius: 50%; width: 20px; height: 20px;");
     const updateLabel = () => {
         btn.textContent = DIRECTION_ICONS.get(globalCurrentDirection)!;
         btn.setAttribute("title", `to the ${globalCurrentDirection} of your character`);
@@ -560,7 +560,7 @@ function createDirectionSelector(callback: (direction: Direction) => void): Elem
 
 function createInteractableSelector(callback: (interactable: Interactable) => void): Element {
     const btn = createBase();
-    addStyle(btn, "width: fit-content;  cursor: pointer;");
+    addStyle(btn, "width: fit-content;  cursor: pointer; background-color: gray; padding: 5px; border-radius: 50%; width: 20px; height: 20px;");
     const updateLabel = () => {
         btn.textContent = INTERACTABLE_ICONS.get(globalInteractable)!;
         btn.setAttribute("title", globalInteractable);
@@ -615,15 +615,12 @@ function createInteractableSelector(callback: (interactable: Interactable) => vo
     return btn;
 }
 
-function createCharacterSelector(callback: (character: Character) => void, withColon: boolean = false): HTMLElement {
+function createCharacterSelector(callback: (character: Character) => void): HTMLElement {
     const btn = createBase();
-    addStyle(btn, "width: fit-content;  cursor: pointer;");
+    addStyle(btn, "width: fit-content;  cursor: pointer; background-color: gray; padding: 5px; border-radius: 50%; width: 20px; height: 20px;");
     const updateLabel = () => {
         btn.innerHTML = "";
         btn.appendChild(createCharacterIcon(globalCharacter));
-        if (withColon) {
-            btn.appendChild(createLabelElement(": "));
-        }
     }
     updateLabel();
 
@@ -840,7 +837,7 @@ function renderCondition(levelDef: RenderLevelDef, stmt: IfStatement | WhileStat
     const characterSelector = createCharacterSelector((c) => {
         character = c;
         updateCondition();
-    }, true);
+    });
     if (!levelDef.hasMage) {
         characterSelector.onclick = () => { };
         addStyle(characterSelector, "cursor: default;");
