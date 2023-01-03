@@ -343,9 +343,6 @@ const TOP_LEVEL_EXCLUDES: StatementExlude[] = [StatementExlude.IS_NEXT_TO, State
 let topLevelAddState: AddState = { isOpen: false };
 function renderProgram(element: Element, levelDef: LevelDefinition, ast: AST): void {
     element.innerHTML = "";
-    for (const stmt of ast.ast) {
-        element.appendChild(renderStmt(stmt, ast.toAstFunctions(), { exludedStatements: levelDef.exludedStatements ?? [], hasMage: levelDef.mage !== undefined }));
-    }
     element.appendChild(
         createAddStmtButton(
             ast.push.bind(ast),
@@ -353,6 +350,9 @@ function renderProgram(element: Element, levelDef: LevelDefinition, ast: AST): v
             topLevelAddState
         )
     );
+    for (const stmt of ast.ast) {
+        element.appendChild(renderStmt(stmt, ast.toAstFunctions(), { exludedStatements: levelDef.exludedStatements ?? [], hasMage: levelDef.mage !== undefined }));
+    }
 }
 
 function createAddStmtButton(pushStmt: (stmt: UIStatement) => void, levelDef: RenderLevelDef, state: AddState): Element {
@@ -759,6 +759,7 @@ function addControlFlowStmt(element: HTMLElement, stmt: IfStatement | WhileState
         };
         const renderBody = () => {
             body.innerHTML = "";
+            body.appendChild(createAddStmtButton(addToBody, bodyLevelDef, stmt.openState));
             stmt.body.forEach(s => body.appendChild(renderStmt(s, {
                 pushStmt: addToBody,
                 removeStmt: (s2) => {
@@ -791,7 +792,6 @@ function addControlFlowStmt(element: HTMLElement, stmt: IfStatement | WhileState
                 },
                 notify: renderBody
             }, bodyLevelDef)));
-            body.appendChild(createAddStmtButton(addToBody, bodyLevelDef, stmt.openState));
         }
 
 
